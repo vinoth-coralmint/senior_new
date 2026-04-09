@@ -1,0 +1,337 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>FinSherpa — Intelligence Hub</title>
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,600&display=swap" rel="stylesheet">
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --dusk:     #425790;
+  --red:      #ff2731;
+  --ink:      #111111;
+  --mid:      #555555;
+  --soft:     #888888;
+  --rule:     #e8e8e8;
+  --bg:       #ffffff;
+  --card-bg:  #f7f8fc;
+  --card-hover: #f0f3fa;
+}
+
+body {
+  background: var(--bg);
+  color: var(--ink);
+  font-family: 'DM Sans', sans-serif;
+  min-height: 100vh;
+  padding: 52px 24px 80px;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* ── HEADER ── */
+header {
+  max-width: 620px;
+  margin: 0 auto 48px;
+}
+
+.logo-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 28px;
+}
+
+.logo-mark {
+  font-size: 20px;
+  color: var(--red);
+  line-height: 1;
+}
+
+.logo-name {
+  font-family: 'DM Sans', sans-serif;
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 2.5px;
+  text-transform: uppercase;
+  color: var(--dusk);
+}
+
+.site-name {
+  font-family: 'Instrument Serif', serif;
+  font-size: clamp(42px, 9vw, 64px);
+  line-height: 1.05;
+  letter-spacing: -1px;
+  color: var(--ink);
+  margin-bottom: 18px;
+}
+
+.site-name em {
+  font-style: italic;
+  color: var(--red);
+}
+
+.site-desc {
+  font-size: 17px;
+  color: var(--mid);
+  font-weight: 400;
+  line-height: 1.65;
+  max-width: 480px;
+}
+
+/* ── GRID ── */
+.grid {
+  max-width: 620px;
+  margin: 0 auto;
+  display: grid;
+  gap: 10px;
+}
+
+/* ── SECTION LABEL ── */
+.section-label {
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 2px;
+  color: var(--soft);
+  text-transform: uppercase;
+  margin: 36px 0 12px;
+  padding-bottom: 10px;
+  border-bottom: 1px solid var(--rule);
+}
+.section-label:first-child { margin-top: 0; }
+
+/* ── CARD ── */
+.card {
+  display: flex;
+  align-items: flex-start;
+  gap: 16px;
+  background: var(--card-bg);
+  border: 1px solid var(--rule);
+  border-radius: 14px;
+  padding: 20px 22px;
+  text-decoration: none;
+  color: inherit;
+  transition: background 0.18s, border-color 0.18s, transform 0.15s, box-shadow 0.18s;
+  position: relative;
+}
+
+.card:hover {
+  background: var(--card-hover);
+  border-color: #c8d0e8;
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(66,87,144,0.1);
+}
+
+.card.priority:hover {
+  border-color: #ffc0c2;
+  box-shadow: 0 6px 20px rgba(255,39,49,0.08);
+}
+
+.card.empty {
+  opacity: 0.4;
+  pointer-events: none;
+  border-style: dashed;
+}
+
+.card-icon {
+  width: 44px;
+  height: 44px;
+  border-radius: 10px;
+  background: #fff;
+  border: 1px solid var(--rule);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 20px;
+  flex-shrink: 0;
+  margin-top: 1px;
+}
+
+.card-body { flex: 1; min-width: 0; }
+
+.card-title {
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--ink);
+  margin-bottom: 4px;
+  line-height: 1.3;
+}
+
+.card-desc {
+  font-size: 14px;
+  color: var(--mid);
+  font-weight: 400;
+  line-height: 1.5;
+}
+
+.card-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 9px;
+}
+
+.badge {
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.4px;
+  padding: 3px 9px;
+  border-radius: 20px;
+}
+.badge-red  { background: #fff0f0; color: #cc1c21; border: 1px solid #ffd4d5; }
+.badge-blue { background: #eef2ff; color: #3a4f85; border: 1px solid #ccd4f0; }
+.badge-grn  { background: #edf7f1; color: #1e6640; border: 1px solid #b4dfc4; }
+.badge-gold { background: #fffbee; color: #7a6010; border: 1px solid #e8d98a; }
+
+.card-arrow {
+  color: var(--soft);
+  font-size: 18px;
+  flex-shrink: 0;
+  align-self: center;
+  transition: color 0.18s, transform 0.18s;
+}
+.card:hover .card-arrow { color: var(--dusk); transform: translateX(3px); }
+.card.priority:hover .card-arrow { color: var(--red); }
+
+/* ── FOOTER ── */
+footer {
+  max-width: 620px;
+  margin: 56px auto 0;
+  padding-top: 24px;
+  border-top: 1px solid var(--rule);
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.footer-brand {
+  font-family: 'Instrument Serif', serif;
+  font-size: 15px;
+  font-style: italic;
+  color: var(--mid);
+}
+
+.footer-contact {
+  font-size: 13px;
+  color: var(--soft);
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 12px;
+}
+.footer-contact a { color: var(--dusk); text-decoration: none; }
+.footer-contact a:hover { text-decoration: underline; }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo-row">
+    <span class="logo-mark">▲</span>
+    <span class="logo-name">FinSherpa</span>
+  </div>
+  <h1 class="site-name">Intelligence <em>Hub</em></h1>
+  <p class="site-desc">A private workspace for GCC outreach intelligence, org charts, scorecards, and campaign assets. Tap any card to open.</p>
+</header>
+
+<main class="grid">
+
+  <p class="section-label">GCC Org Charts</p>
+
+  <a class="card priority" href="Ashley_GCC_OrgChart_FinSherpa.html">
+    <div class="card-icon">🏢</div>
+    <div class="card-body">
+      <div class="card-title">Ashley Global Capability Center</div>
+      <div class="card-desc">11 leaders mapped with priority scoring. Tap each card for full profile and opening hooks.</div>
+      <div class="card-meta">
+        <span class="badge badge-red">3 Priority 1</span>
+        <span class="badge badge-blue">4 Priority 2</span>
+        <span class="badge badge-grn">Chennai</span>
+      </div>
+    </div>
+    <span class="card-arrow">→</span>
+  </a>
+
+  <a class="card empty" href="#">
+    <div class="card-icon">🏢</div>
+    <div class="card-body">
+      <div class="card-title">Next GCC — Coming Soon</div>
+      <div class="card-desc">Add your next org chart here</div>
+    </div>
+    <span class="card-arrow">→</span>
+  </a>
+
+  <p class="section-label">Outreach Decks</p>
+
+  <a class="card priority" href="FinSherpa_Imran_Siddique.pptx">
+    <div class="card-icon">📊</div>
+    <div class="card-body">
+      <div class="card-title">Mohammed Imran Siddique — Ashley GCC</div>
+      <div class="card-desc">Director, Finance & Accounting · Cohort 1: Established Commander · ESOP & tax planning angle</div>
+      <div class="card-meta">
+        <span class="badge badge-red">Priority 1</span>
+        <span class="badge badge-gold">5 slides</span>
+      </div>
+    </div>
+    <span class="card-arrow">→</span>
+  </a>
+
+  <a class="card priority" href="FinSherpa_Ravi_Nalwaya.pptx">
+    <div class="card-icon">📊</div>
+    <div class="card-body">
+      <div class="card-title">Ravi Nalwaya — Staples India</div>
+      <div class="card-desc">MD & Head · Cohort 3: Pre-Retiree / Transition Seeker · Accumulation to distribution angle</div>
+      <div class="card-meta">
+        <span class="badge badge-red">Priority 1</span>
+        <span class="badge badge-gold">5 slides</span>
+      </div>
+    </div>
+    <span class="card-arrow">→</span>
+  </a>
+
+  <p class="section-label">ICP & Strategy</p>
+
+  <a class="card empty" href="#">
+    <div class="card-icon">🎯</div>
+    <div class="card-body">
+      <div class="card-title">GCC Leader ICP — 5 Cohorts</div>
+      <div class="card-desc">Scorecard & LinkedIn filter criteria</div>
+    </div>
+    <span class="card-arrow">→</span>
+  </a>
+
+  <a class="card empty" href="#">
+    <div class="card-icon">📋</div>
+    <div class="card-body">
+      <div class="card-title">Prospect Scorecard</div>
+      <div class="card-desc">Priority scoring sheet</div>
+    </div>
+    <span class="card-arrow">→</span>
+  </a>
+
+  <p class="section-label">Reference</p>
+
+  <a class="card" href="FinSherpa_Intelligence_Brief.docx">
+    <div class="card-icon">📄</div>
+    <div class="card-body">
+      <div class="card-title">FinSherpa Intelligence Brief</div>
+      <div class="card-desc">Company profile, team backgrounds, and conversation starters — March 2026</div>
+      <div class="card-meta">
+        <span class="badge badge-blue">Context doc</span>
+      </div>
+    </div>
+    <span class="card-arrow">→</span>
+  </a>
+
+</main>
+
+<footer>
+  <span class="footer-brand">FinSherpa Investments Private Limited — Helping You Reach Your Financial Peak</span>
+  <div class="footer-contact">
+    <a href="https://www.finsherpa.com">finsherpa.com</a>
+    <span>info@finsherpa.com</span>
+    <span>+91-9159269900</span>
+  </div>
+</footer>
+
+</body>
+</html>
