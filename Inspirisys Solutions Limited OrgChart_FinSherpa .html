@@ -1,0 +1,623 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Inspirisys Solutions — FinSherpa Priority Map</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700&family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root {
+  --dusk:      #425790;
+  --dusk-dark: #2d3d66;
+  --dusk-lite: #6878b0;
+  --red:       #ff2731;
+  --lav:       #f6f0f8;
+  --plat:      #eaeeeb;
+  --grey:      #939393;
+  --ink:       #1a1a2e;
+  --white:     #ffffff;
+}
+* { margin:0; padding:0; box-sizing:border-box; }
+body { font-family:'DM Sans',sans-serif; background:#f0f2f8; color:var(--ink); }
+
+/* HEADER */
+.header {
+  background:var(--dusk-dark);
+  border-bottom:4px solid var(--red);
+  padding:20px 24px 18px;
+}
+.header h1 { font-family:'Playfair Display',serif; font-size:20px; color:#fff; }
+.header h1 span { color:var(--red); }
+.header p { font-size:11px; color:#8899bb; margin-top:4px; }
+.legend { display:flex; gap:14px; margin-top:12px; flex-wrap:wrap; }
+.leg { display:flex; align-items:center; gap:6px; font-size:11px; color:#aab; }
+.leg-dot { width:10px; height:10px; border-radius:50%; flex-shrink:0; }
+
+/* CHART */
+.chart-wrap { padding:28px 16px 12px; overflow-x:auto; }
+.org { display:flex; flex-direction:column; align-items:center; min-width:320px; }
+
+.lvl-label {
+  font-size:9px; font-weight:600; letter-spacing:2px; text-transform:uppercase;
+  color:var(--grey); margin:20px 0 10px; text-align:center;
+}
+
+.conn-v { width:2px; height:18px; background:var(--dusk-lite); opacity:.45; }
+
+.conn-h-row {
+  display:flex; align-items:flex-start; justify-content:center;
+  position:relative; width:100%;
+}
+.conn-h-row::before {
+  content:''; position:absolute; top:0; left:50%; transform:translateX(-50%);
+  height:2px; background:var(--dusk-lite); opacity:.35;
+  width:calc(100% - 60px); max-width:700px;
+}
+.branch { display:flex; flex-direction:column; align-items:center; flex:1; max-width:200px; min-width:110px; padding:0 5px; }
+.branch-v { width:2px; height:18px; background:var(--dusk-lite); opacity:.4; }
+
+/* NODE */
+.node {
+  border-radius:10px; padding:10px 12px; border-left:4px solid;
+  background:#fff; box-shadow:0 2px 8px rgba(0,0,0,.07);
+  cursor:pointer; transition:transform .18s, box-shadow .18s;
+  width:100%; text-align:left; position:relative;
+  -webkit-tap-highlight-color:transparent;
+}
+.node:hover, .node:active { transform:translateY(-2px); box-shadow:0 6px 18px rgba(0,0,0,.13); }
+.node.p1 { border-color:#ff2731; background:#fff8f8; }
+.node.p2 { border-color:#425790; background:#f5f7ff; }
+.node.p3 { border-color:#2e7d4e; background:#f4fbf6; }
+
+.node-badge {
+  position:absolute; top:8px; right:8px;
+  font-size:8px; font-weight:700; letter-spacing:.8px; text-transform:uppercase;
+  padding:2px 6px; border-radius:8px; color:#fff;
+}
+.p1 .node-badge { background:#ff2731; }
+.p2 .node-badge { background:#425790; }
+.p3 .node-badge { background:#2e7d4e; }
+
+.node-name { font-family:'Playfair Display',serif; font-size:12px; font-weight:600; color:var(--ink); line-height:1.3; padding-right:34px; }
+.node-role  { font-size:9.5px; color:var(--grey); margin-top:3px; line-height:1.35; }
+.node-hint  { font-size:8.5px; color:var(--dusk-lite); margin-top:4px; font-style:italic; }
+
+/* HERO */
+.node.hero { border-left:5px solid #ff2731; background:linear-gradient(135deg,#fff8f8,#fff); box-shadow:0 4px 20px rgba(255,39,49,.12); max-width:300px; padding:14px 16px; }
+.node.hero .node-name { font-size:15px; padding-right:52px; }
+.node.hero .node-role { font-size:11px; }
+.hero-crown { display:block; font-size:8.5px; font-weight:700; letter-spacing:1.2px; text-transform:uppercase; color:#ff2731; margin-bottom:5px; }
+
+/* MODAL */
+.overlay {
+  display:none; position:fixed; inset:0;
+  background:rgba(10,15,35,.65); z-index:200;
+  align-items:center; justify-content:center;
+  padding:16px; backdrop-filter:blur(3px);
+  overflow-y:auto;
+}
+.overlay.open { display:flex; }
+.modal {
+  background:#fff; border-radius:16px; max-width:480px; width:100%;
+  max-height:90vh; overflow-y:auto;
+  box-shadow:0 20px 60px rgba(0,0,0,.35);
+  animation:popIn .22s cubic-bezier(.34,1.56,.64,1) both;
+  margin:auto;
+}
+@keyframes popIn {
+  from { opacity:0; transform:scale(.88) translateY(16px); }
+  to   { opacity:1; transform:scale(1) translateY(0); }
+}
+.modal-head { padding:20px 20px 16px; border-bottom:1px solid var(--lav); position:relative; }
+.close-btn {
+  position:absolute; top:14px; right:14px;
+  width:30px; height:30px; border-radius:50%; border:none;
+  background:var(--plat); color:var(--ink); font-size:16px;
+  cursor:pointer; display:flex; align-items:center; justify-content:center;
+}
+.close-btn:hover { background:#ddd; }
+.modal-priority {
+  display:inline-block; font-size:9px; font-weight:700; letter-spacing:1px;
+  text-transform:uppercase; padding:3px 9px; border-radius:10px; color:#fff; margin-bottom:8px;
+}
+.modal-name { font-family:'Playfair Display',serif; font-size:20px; font-weight:700; color:var(--ink); line-height:1.2; margin-bottom:4px; }
+.modal-role { font-size:12px; color:var(--grey); line-height:1.4; }
+
+.modal-body { padding:16px 20px 20px; display:flex; flex-direction:column; gap:12px; }
+.sec-title { font-size:9px; font-weight:700; letter-spacing:2px; text-transform:uppercase; color:var(--dusk-lite); margin-bottom:5px; }
+.sec-box { background:var(--lav); border-radius:8px; padding:12px 14px; }
+.sec-box.blue { background:#eef2ff; }
+.sec-box.dark { background:var(--ink); }
+.modal-text { font-size:12.5px; color:#2d3050; line-height:1.6; }
+.modal-text.light { color:#c0cce0; }
+
+.stats-row { display:flex; background:#f8f9ff; border-radius:8px; overflow:hidden; }
+.stat-item { flex:1; text-align:center; padding:10px 6px; border-right:1px solid #e8eaf8; }
+.stat-item:last-child { border-right:none; }
+.stat-v { font-family:'Playfair Display',serif; font-size:15px; font-weight:700; color:var(--dusk); }
+.stat-l { font-size:8.5px; color:var(--grey); text-transform:uppercase; letter-spacing:.5px; margin-top:2px; }
+
+.tags { display:flex; flex-wrap:wrap; gap:5px; margin-top:10px; }
+.tag { font-size:10px; padding:3px 8px; border-radius:5px; font-weight:500; }
+.t-red  { background:#fff0f0; color:#ff2731; border:1px solid #ffd0d2; }
+.t-blue { background:#eef2ff; color:#425790; border:1px solid #c5d0f0; }
+.t-gold { background:#fffbea; color:#7a5c00; border:1px solid #f5e07a; }
+.t-grn  { background:#eefbf2; color:#1a5c33; border:1px solid #9de0b6; }
+
+.hook-box { background:var(--ink); border-radius:8px; padding:12px 14px; }
+.hook-label { font-size:9px; color:#ff2731; font-weight:700; letter-spacing:1.5px; text-transform:uppercase; margin-bottom:6px; }
+.hook-text { font-size:12px; color:#fde68a; font-style:italic; line-height:1.6; }
+
+.li-box {
+  display:flex; align-items:center; gap:8px;
+  font-size:11px; color:var(--dusk); font-family:'DM Mono',monospace;
+  background:#f0f4ff; border-radius:6px; padding:8px 12px;
+}
+.li-box::before { content:'🔗'; }
+
+/* PATHWAYS */
+.pathways { background:var(--dusk-dark); padding:28px 20px 40px; }
+.pathways h2 { font-family:'Playfair Display',serif; font-size:18px; color:#fff; margin-bottom:4px; }
+.pathways .sub { font-size:11.5px; color:#8899bb; margin-bottom:20px; line-height:1.5; }
+
+.steps { display:flex; flex-direction:column; gap:10px; margin-bottom:24px; }
+.step { display:flex; gap:12px; align-items:flex-start; background:rgba(255,255,255,.05); border-radius:10px; padding:12px 14px; }
+.step-num { flex-shrink:0; width:24px; height:24px; border-radius:50%; background:var(--red); color:#fff; font-size:11px; font-weight:700; display:flex; align-items:center; justify-content:center; }
+.step-title { font-size:12.5px; font-weight:600; color:#fff; margin-bottom:3px; }
+.step-desc { font-size:11px; color:#9ab; line-height:1.5; }
+.step-desc strong { color:#c8d8f0; }
+
+.pway-grid { display:grid; grid-template-columns:1fr 1fr; gap:10px; }
+@media(max-width:480px) { .pway-grid { grid-template-columns:1fr; } }
+
+.pway-card { background:rgba(255,255,255,.06); border:1px solid rgba(255,255,255,.1); border-radius:10px; padding:14px; }
+.pway-badge { display:inline-block; font-size:8.5px; font-weight:700; letter-spacing:1px; text-transform:uppercase; padding:2px 7px; border-radius:8px; color:#fff; margin-bottom:7px; }
+.pb1 { background:#ff2731; } .pb2 { background:#425790; } .pb3 { background:#2e7d4e; }
+.pway-name { font-size:13px; font-weight:600; color:#fff; margin-bottom:2px; }
+.pway-role { font-size:10px; color:#7a8aaa; margin-bottom:8px; }
+.pway-why  { font-size:11px; color:#bbc8dc; line-height:1.5; margin-bottom:7px; }
+.pway-hook { font-size:11px; color:#fde68a; font-style:italic; border-left:2px solid var(--red); padding-left:8px; line-height:1.5; }
+
+/* FOOTER */
+.footer { background:#111827; padding:12px 20px; font-size:10px; color:#556; text-align:center; line-height:1.8; }
+
+::-webkit-scrollbar { width:5px; height:5px; }
+::-webkit-scrollbar-thumb { background:rgba(0,0,0,.15); border-radius:4px; }
+</style>
+</head>
+<body>
+
+<!-- HEADER -->
+<div class="header">
+  <h1>Inspirisys Solutions — <span>FinSherpa</span> Priority Map</h1>
+  <p>Chennai · CAC Holdings Group · 1,001–5,000 employees · Listed company · Tap any card for full profile</p>
+  <div class="legend">
+    <div class="leg"><div class="leg-dot" style="background:#ff2731"></div>Priority 1 — Primary target</div>
+    <div class="leg"><div class="leg-dot" style="background:#425790"></div>Priority 2 — High value</div>
+    <div class="leg"><div class="leg-dot" style="background:#2e7d4e"></div>Priority 3 — Warm pathway</div>
+  </div>
+</div>
+
+<!-- CHART -->
+<div class="chart-wrap">
+<div class="org">
+
+  <!-- TIER 1: CEO -->
+  <div class="lvl-label">Board & Executive Head</div>
+  <div class="node hero p1" onclick="openModal('murali')">
+    <span class="hero-crown">⭐ Ultimate Target</span>
+    <div class="node-name">Murali Gopalakrishnan</div>
+    <div class="node-role">Executive Director & CEO — Inspirisys Solutions</div>
+    <div class="node-hint">CA + Cost Accountant · 30+ yrs · Spencer's Retail · JSW Steel</div>
+    <div class="node-badge">P1</div>
+  </div>
+
+  <div class="conn-v"></div>
+  <div class="lvl-label">C-Suite</div>
+  <div class="conn-h-row" style="max-width:620px;width:100%;">
+    <div class="branch">
+      <div class="branch-v"></div>
+      <div class="node p1" onclick="openModal('balaji')">
+        <div class="node-badge">P1</div>
+        <div class="node-name">Balaji Ramanujam</div>
+        <div class="node-role">Chief Financial Officer</div>
+        <div class="node-hint">CA · PSG College · Deloitte · TVS</div>
+      </div>
+    </div>
+    <div class="branch">
+      <div class="branch-v"></div>
+      <div class="node p2" onclick="openModal('jayesh')">
+        <div class="node-badge">P2</div>
+        <div class="node-name">Jayesh Ahluwalia</div>
+        <div class="node-role">Chief Operating Officer — Infra</div>
+        <div class="node-hint">28+ yrs · Electronics & Telecom</div>
+      </div>
+    </div>
+    <div class="branch">
+      <div class="branch-v"></div>
+      <div class="node p2" onclick="openModal('reni')">
+        <div class="node-badge">P2</div>
+        <div class="node-name">Reni Rozario</div>
+        <div class="node-role">President — Corporate & PED</div>
+        <div class="node-hint">MBA · UK · Ex-Olam Group</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="conn-v"></div>
+  <div class="lvl-label">Senior Leadership</div>
+  <div class="conn-h-row" style="max-width:760px;width:100%;">
+    <div class="branch">
+      <div class="branch-v"></div>
+      <div class="node p1" onclick="openModal('maqbool')">
+        <div class="node-badge">P1</div>
+        <div class="node-name">Maqbool Hassan</div>
+        <div class="node-role">Advisor — Strategic Initiatives</div>
+        <div class="node-hint">28 yrs at ISL · Ex-Dubai · Kerala</div>
+      </div>
+    </div>
+    <div class="branch">
+      <div class="branch-v"></div>
+      <div class="node p2" onclick="openModal('rajagopalan')">
+        <div class="node-badge">P2</div>
+        <div class="node-name">Rajagopalan Subramanian</div>
+        <div class="node-role">GM / AVP Sales — South</div>
+        <div class="node-hint">27 yrs tenure · SASTRA · TN/KL/AP/KA</div>
+      </div>
+    </div>
+    <div class="branch">
+      <div class="branch-v"></div>
+      <div class="node p2" onclick="openModal('vijay')">
+        <div class="node-badge">P2</div>
+        <div class="node-name">Vijay Narayan</div>
+        <div class="node-role">AVP — Marketing & Comms</div>
+        <div class="node-hint">Ex-Citi · Vivekananda College · Gateway</div>
+      </div>
+    </div>
+    <div class="branch">
+      <div class="branch-v"></div>
+      <div class="node p2" onclick="openModal('danny')">
+        <div class="node-badge">P2</div>
+        <div class="node-name">Dharanidhar Danny</div>
+        <div class="node-role">GM Sales — Banking Practice</div>
+        <div class="node-hint">BFSI network · Ex-Singapore</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="conn-v"></div>
+  <div class="lvl-label">Sales & Delivery Leads</div>
+  <div class="conn-h-row" style="max-width:580px;width:100%;">
+    <div class="branch">
+      <div class="branch-v"></div>
+      <div class="node p3" onclick="openModal('arvind')">
+        <div class="node-badge">P3</div>
+        <div class="node-name">Arvind Mishra</div>
+        <div class="node-role">Nat. Sales Head — BFSI</div>
+        <div class="node-hint">Mumbai-based · BFSI network</div>
+      </div>
+    </div>
+    <div class="branch">
+      <div class="branch-v"></div>
+      <div class="node p3" onclick="openModal('shanmugam')">
+        <div class="node-badge">P3</div>
+        <div class="node-name">Shanmugam Ramanathan</div>
+        <div class="node-role">VP — Product Engineering</div>
+        <div class="node-hint">Ex-Altimetrik · 25+ yrs · Tirunelveli</div>
+      </div>
+    </div>
+    <div class="branch">
+      <div class="branch-v"></div>
+      <div class="node p3" onclick="openModal('kangeyan')">
+        <div class="node-badge">P3</div>
+        <div class="node-name">Kangeyan Gangadharan</div>
+        <div class="node-role">President — Infra Products</div>
+        <div class="node-hint">Largest revenue division head</div>
+      </div>
+    </div>
+  </div>
+
+</div>
+</div>
+
+<!-- REACH PATHWAYS -->
+<div class="pathways">
+  <h2>Reach Pathways</h2>
+  <p class="sub">Sequenced strategy for Babu Krishnamoorthy to move from first contact to Murali — the ultimate target.</p>
+
+  <div class="steps">
+    <div class="step">
+      <div class="step-num">1</div>
+      <div>
+        <div class="step-title">Week 1–2 · Connect Balaji Ramanujam (CFO)</div>
+        <div class="step-desc">Easiest first conversation — CA to CA. Reference <strong>PSG College, Coimbatore or Deloitte alumni networks</strong>. Hook: "Fellow CA running a wealth advisory for finance leaders — your peers are our clients."</div>
+      </div>
+    </div>
+    <div class="step">
+      <div class="step-num">2</div>
+      <div>
+        <div class="step-title">Week 2–3 · Warm intro via Vijay Narayan (AVP Marketing)</div>
+        <div class="step-desc">Most accessible entry. Reference a <strong>shared MMA Chennai event or Chennai CXO conference</strong>. Ask Vijay to facilitate a FinSherpa financial wellness session for Inspirisys — converts one contact into a group engagement.</div>
+      </div>
+    </div>
+    <div class="step">
+      <div class="step-num">3</div>
+      <div>
+        <div class="step-title">Week 3–4 · NRI re-entry pitch to Maqbool Hassan</div>
+        <div class="step-desc">Maqbool just returned from <strong>2+ years in Dubai</strong>. Classic NRI re-entry financial complexity: FEMA compliance, NRE/NRO restructuring, portfolio rebalancing. High-value, timely, urgent — a conversation he needs right now.</div>
+      </div>
+    </div>
+    <div class="step">
+      <div class="step-num">4</div>
+      <div>
+        <div class="step-title">Week 4–5 · Reach Murali Gopalakrishnan (CEO) via ICAI channel</div>
+        <div class="step-desc">By now you have 2–3 touchpoints in the org. Reach Murali via <strong>ICAI Chennai or Cost Accountants (ICAI-CMA) network</strong> as a peer — CA to CA. Warm intro from Balaji or Vijay to make the ask softer.</div>
+      </div>
+    </div>
+    <div class="step">
+      <div class="step-num">5</div>
+      <div>
+        <div class="step-title">Ongoing · ESOP & tenure conversation with Rajagopalan</div>
+        <div class="step-desc">Rajagopalan's <strong>27-year tenure at a listed company</strong> means significant PF, gratuity, and ESOPs — often unmanaged. Hook: "30 years at one company is a rare wealth event. Let's structure it properly."</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="pway-grid">
+    <div class="pway-card">
+      <div class="pway-badge pb1">P1 — Primary</div>
+      <div class="pway-name">Murali Gopalakrishnan</div>
+      <div class="pway-role">ED & CEO</div>
+      <div class="pway-why">CA + Cost Accountant like Babu. 30+ yr career across retail & manufacturing. Significant personal wealth. Speaks at Chennai CXO forums.</div>
+      <div class="pway-hook">"You've led finance across retail, steel & IT for 30 years. Who's managing your own financial peak?"</div>
+    </div>
+    <div class="pway-card">
+      <div class="pway-badge pb1">P1 — Direct Prospect</div>
+      <div class="pway-name">Balaji Ramanujam</div>
+      <div class="pway-role">CFO</div>
+      <div class="pway-why">CA since 1994. PSG College Coimbatore. Deloitte + TVS + GE background. 30+ yrs finance. Best direct wealth management prospect in the org.</div>
+      <div class="pway-hook">"CFOs are the least likely to have someone managing their own finances. Let's fix that."</div>
+    </div>
+    <div class="pway-card">
+      <div class="pway-badge pb1">P1 — Urgent NRI Need</div>
+      <div class="pway-name">Maqbool Hassan</div>
+      <div class="pway-role">Advisor, Strategic Initiatives</div>
+      <div class="pway-why">Just returned from Dubai after 2+ years. NRI re-entry = FEMA, NRE/NRO, foreign assets. 28 yrs of ISL tenure = large retirement corpus. Very timely conversation.</div>
+      <div class="pway-hook">"Returning from Dubai with assets on two continents is complex. We specialise in exactly this."</div>
+    </div>
+    <div class="pway-card">
+      <div class="pway-badge pb2">P2 — Gateway</div>
+      <div class="pway-name">Vijay Narayan</div>
+      <div class="pway-role">AVP Marketing & Comms</div>
+      <div class="pway-why">Most accessible. Controls corporate events & external partnerships. Ex-Citi. Can facilitate a FinSherpa session for all Inspirisys staff — highest leverage single contact.</div>
+      <div class="pway-hook">"Could we run a 'Personal Finance for IT Professionals' session for your team at Inspirisys?"</div>
+    </div>
+    <div class="pway-card">
+      <div class="pway-badge pb2">P2 — ESOP Angle</div>
+      <div class="pway-name">Rajagopalan Subramanian</div>
+      <div class="pway-role">GM / AVP Sales — South</div>
+      <div class="pway-why">27+ years at one listed company. Large PF, gratuity, ESOPs accumulating. Entire career in one place — typical blind spot for personal financial planning.</div>
+      <div class="pway-hook">"27 years at a listed company is a rare wealth moment. When did you last review your full corpus?"</div>
+    </div>
+    <div class="pway-card">
+      <div class="pway-badge pb2">P2 — Referral Source</div>
+      <div class="pway-name">Dharanidhar Danny</div>
+      <div class="pway-role">GM Sales — Banking</div>
+      <div class="pway-why">His banking clients are senior bank CXOs — exactly FinSherpa's ICP. Position as a mutual referral partner: Danny's clients need wealth advice; FinSherpa's credibility adds value to Danny's relationships.</div>
+      <div class="pway-hook">"Your BFSI clients trust you. If you refer them to us, we'll make sure that trust is well placed."</div>
+    </div>
+  </div>
+</div>
+
+<!-- FOOTER -->
+<div class="footer">
+  Prepared for <strong>FinSherpa Investments Pvt Ltd</strong> · Babu Krishnamoorthy, Chief Sherpa · Chennai<br>
+  Inspirisys Solutions Limited (a CAC Holdings Group Company) · NSE/BSE Listed · 1,001–5,000 employees
+</div>
+
+<!-- OVERLAY -->
+<div class="overlay" id="overlay" onclick="bgClose(event)">
+  <div class="modal" id="modal"></div>
+</div>
+
+<script>
+const P = {
+  murali:{
+    priority:1, badgeColor:'#ff2731', badge:'P1 — Ultimate Target',
+    name:'Murali Gopalakrishnan',
+    role:'Executive Director & Chief Executive Officer',
+    stats:[{v:'CA+CMA',l:'Qualification'},{v:'30+ yrs',l:'Experience'},{v:'CEO',l:'Since 2022'},{v:'CFO→CEO',l:'ISL Career'}],
+    about:'Executive Director & CEO of Inspirisys Solutions since November 2022 (re-appointed April 2025). Previously served as Group CFO of Inspirisys 2017–2022. Before Inspirisys: Executive Director–Commercial at Spencer\'s Retail (2012–2017), VP Operations at Spencer\'s Retail (2007–2012), VP & GM at JSW Steel India/Salem Works. Schooled at Santhome Higher Secondary School, Chennai.',
+    background:'Chartered Accountant (ICAI) and Graduate Cost & Works Accountant (ICAI-CMA, 1985–1989). 30+ years spanning audit, consulting, manufacturing, retail, and IT — one of the most financially sophisticated profiles in Chennai\'s corporate leadership. Active speaker at CEO forums, AI conferences, and CXO events in Chennai.',
+    finsherpa:'The most powerful shared credential with Babu: both are CA + Cost Accountants. Murali\'s career arc across JSW Steel, Spencer\'s Retail, and a listed IT company means significant personal wealth accumulated across sectors. Likely holds company ESOPs, listed equity, and deferred compensation. A finance leader of this calibre often has no one managing their own finances with the same rigor they apply at work.',
+    hook:'"You\'ve managed P&Ls across steel, retail, and IT for 30 years. Who is managing your own financial peak?"',
+    tags:['CA + CMA','Ex-Spencer\'s Retail','Ex-JSW Steel','Listed company ED','CEO Forum speaker'],
+    tagTypes:['t-red','t-blue','t-blue','t-gold','t-grn'],
+    li:'linkedin.com/in/murali-gopalakrishnan-4081a4a'
+  },
+  balaji:{
+    priority:1, badgeColor:'#ff2731', badge:'P1 — Primary Wealth Prospect',
+    name:'Balaji Ramanujam',
+    role:'Chief Financial Officer',
+    stats:[{v:'CA',l:'ICAI 1994'},{v:'30+ yrs',l:'Finance'},{v:'PSG',l:'Coimbatore'},{v:'Since 2016',l:'At ISL'}],
+    about:'CFO of Inspirisys Solutions since 2016. Also Director at Inspirisys Solutions IT Resources Ltd. Prior roles: Finance Controller at Newell Brands (Rubbermaid); finance positions at GE Energy–Converteam, TVS Eurogrip, Deloitte, BS&B Technologies, and Wellknit Apparels. Education: B.Sc from PSG College of Arts & Science, Coimbatore; ACA from ICAI (1989–1994). Responsible for Finance, Legal and Sales Operations at Inspirisys.',
+    background:'30+ years in finance across MNCs in manufacturing, energy, and IT sectors. Has restructured and streamlined Inspirisys\'s entire F&A function since 2016. Skills: Financial Planning & Control, Treasury Management, IFRS, Taxation, Audit & Compliance. Posts regularly on LinkedIn on CFO-finance relationship topics.',
+    finsherpa:'The single best direct wealth management prospect at Inspirisys. CA since 1994 = shared professional identity with Babu. PSG College Coimbatore alumni network and Deloitte alumni network are two warm channels. 30 years of finance career earnings + listed company ESOPs/options at a senior level. CFOs are classically the least financially planned individuals — they manage everyone else\'s money but not their own.',
+    hook:'"CFOs are the last people to have someone actively managing their own wealth. Let\'s change that for you."',
+    tags:['CA since 1994','PSG College Coimbatore','Ex-Deloitte','Ex-TVS Eurogrip','Ex-GE Energy','Best direct prospect'],
+    tagTypes:['t-red','t-gold','t-blue','t-blue','t-blue','t-grn'],
+    li:'linkedin.com/in/balaji-ramanujam-47488622'
+  },
+  jayesh:{
+    priority:2, badgeColor:'#425790', badge:'P2 — Senior Prospect',
+    name:'Jayesh Ahluwalia',
+    role:'Chief Operating Officer — Infra Division',
+    stats:[{v:'28+ yrs',l:'At Inspirisys'},{v:'COO',l:'Infra & Cloud'},{v:'Telecom',l:'P&L Built'},{v:'P2',l:'Priority'}],
+    about:'COO of Inspirisys Solutions overseeing sales and delivery for Infrastructure, Enterprise Security, and Cloud. 28+ years progressive roles within Inspirisys — grew the Telecom business from scratch making it the largest revenue-generating vertical. Prior roles at Fujitsu ICIM and PCL. Engineering background in Electronics & Telecom.',
+    background:'One of the longest-serving leaders at Inspirisys. Responsible for P&L across the largest divisions. Winner of multiple awards from OEM partners. Instrumental in all major client relationships in the Infrastructure space. Well-connected with technology OEMs and enterprise CIOs across India.',
+    finsherpa:'Long tenure + COO-level compensation = significant accumulated wealth that may be unmanaged. P&L leader with a strong OEM network — his connections at technology companies could yield referrals for FinSherpa. Approach via peer senior leader forums once a relationship with Murali or Balaji is established.',
+    hook:'"28 years of building Inspirisys\'s largest division. Is your personal wealth compounding at the same rate?"',
+    tags:['28+ yrs tenure','COO level','Telecom P&L built','OEM network','Senior prospect'],
+    tagTypes:['t-gold','t-red','t-blue','t-grn','t-gold'],
+    li:null
+  },
+  reni:{
+    priority:2, badgeColor:'#425790', badge:'P2 — International Profile',
+    name:'Reni Rozario',
+    role:'President — Corporate (PED, HR, Marketing, WMS)',
+    stats:[{v:'President',l:'Corporate'},{v:'UK MBA',l:'Education'},{v:'Olam',l:'Prior Role'},{v:'P2',l:'Priority'}],
+    about:'President–Corporate at Inspirisys overseeing Product Engineering, Marketing, HR, Admin, IT, and Warranty Management. Prior roles within Inspirisys across business transformation, and earlier at Olam Group where he set up the Global Business Services (GBS) offshoring initiative. Education: B.E., MBA, and Master\'s in International Management from UK.',
+    background:'Strong international profile — UK postgraduate education and Olam Group global exposure. Experienced in supply chain, food & agri-business, chemicals, and distribution. Strategic Planning and Business Process Re-engineering specialist. Manages the widest portfolio in the organisation.',
+    finsherpa:'UK education + international career = awareness of sophisticated financial products and planning. Olam Group background connects him to a broad Singapore/global corporate network. As President–Corporate overseeing HR, he has the authority to approve a FinSherpa financial wellness programme for all Inspirisys employees — a B2B opportunity.',
+    hook:'"Your role touches every employee\'s career. Could FinSherpa support their financial journey too — starting with yours?"',
+    tags:['UK educated','Ex-Olam Group','Controls HR function','B2B wellness angle','International career'],
+    tagTypes:['t-gold','t-blue','t-grn','t-grn','t-blue'],
+    li:null
+  },
+  maqbool:{
+    priority:1, badgeColor:'#ff2731', badge:'P1 — Urgent NRI Prospect',
+    name:'Maqbool Hassan',
+    role:'Advisor — Strategic Initiatives (Ex-President Dubai Ops)',
+    stats:[{v:'28 yrs',l:'At Inspirisys'},{v:'Dubai',l:'2022–2024'},{v:'Kerala',l:'Origin'},{v:'NRI',l:'Re-entry'}],
+    about:'Founding-generation leader at Inspirisys (joined 1997 — 28 years). Previously: Director & President of Inspirisys Solutions DMCC, Dubai (2017–2024); President–Enterprise Sales; President–Practice & Delivery. Now back in Chennai as Advisor–Strategic Initiatives and also Strategic Advisor at Kluisz.ai. Education: PGDM Marketing, Annamalai University (1992–1994). Career started at HCL Infosystems (1990).',
+    background:'A founder-generation member who shaped Inspirisys from its Accel Frontline days. Involved in all M&A, market expansions, and practice builds over three decades. Dubai tenure of 2+ years has just ended — he is back in Chennai and rebuilding his India-based advisory portfolio. Active in the Zoho ecosystem and startup community (visible at IvyCap Day, Kluisz.ai).',
+    finsherpa:'Three high-value financial needs converge here. First: NRI re-entry complexity — FEMA compliance, NRE/NRO account restructuring, foreign asset declaration, and India portfolio rebalancing after 2 years abroad. Second: 28-year tenure at a listed company = accumulated ESOPs, gratuity, PF, and deferred compensation needing structured management. Third: now transitioning to advisory/consulting income — variable income planning and retirement corpus structuring are immediately relevant.',
+    hook:'"You\'ve just returned from Dubai with assets on two continents and a 28-year wealth event at a listed company. That\'s exactly the complexity FinSherpa was built for."',
+    tags:['NRI re-entry need','28 yrs listed company ESOPs','Founder-generation','Dubai return','Variable income now','Kluisz.ai advisor'],
+    tagTypes:['t-red','t-red','t-gold','t-blue','t-gold','t-grn'],
+    li:'linkedin.com/in/maqbool-hassan-5b33ba1ab'
+  },
+  rajagopalan:{
+    priority:2, badgeColor:'#425790', badge:'P2 — Long-Tenure ESOP Prospect',
+    name:'Rajagopalan Subramanian',
+    role:'GM / AVP Sales — South Region (TN, KL, AP, KA)',
+    stats:[{v:'27+ yrs',l:'At Inspirisys'},{v:'SASTRA',l:'University'},{v:'South',l:'Region Head'},{v:'Listed',l:'Company'}],
+    about:'Associate VP / General Manager Sales–South at Inspirisys covering Tamil Nadu, Kerala, Andhra Pradesh, and Karnataka. Has spent virtually his entire career (27+ years) at Inspirisys and its predecessor Accel Frontline — starting as Customer Support Executive in 1996. Education: SASTRA University (Shanmugha Arts, Science, Technology and Research Academy), Thanjavur. 263 LinkedIn connections.',
+    background:'Long-tenured sales leader managing the full South India enterprise territory. Well-regarded by clients (positive LinkedIn recommendations visible). Covers BFSI, IT, ITES, Manufacturing, Telecom, Healthcare, and Life Sciences verticals across South India. Rare example of building an entire career at one organisation.',
+    finsherpa:'27 years at a single listed IT company is a unique wealth situation: significant accumulated PF, gratuity, listed company ESOPs, annual incentive bonuses, and sales commissions — often uncoordinated and unmanaged. Approaching the retirement planning horizon. SASTRA University alumni network (Thanjavur/Chennai) is a warm introduction path. His entire South India sales network is also a referral pool for FinSherpa.',
+    hook:'"27 years at Inspirisys is one of Chennai\'s longest careers in IT. Your PF, gratuity, ESOPs, and bonuses add up to a significant number. When did you last sit down and look at the full picture?"',
+    tags:['27+ yrs single company','Listed ESOP holder','South India network','SASTRA alumnus','Near retirement horizon'],
+    tagTypes:['t-red','t-gold','t-grn','t-blue','t-gold'],
+    li:'linkedin.com/in/rajagopalan-subramanian-879bbb5'
+  },
+  vijay:{
+    priority:2, badgeColor:'#425790', badge:'P2 — Best Gateway Contact',
+    name:'Vijay Narayan',
+    role:'AVP — Marketing & Corporate Communication',
+    stats:[{v:'Gateway',l:'Best Entry'},{v:'Citi',l:'Prior Role'},{v:'500+',l:'LinkedIn'},{v:'Events',l:'Controls'}],
+    about:'Associate VP Marketing & Corporate Communication at Inspirisys since 2022. Prior: CMO at Business Dynamiks Pvt Ltd; marketing & comms roles at Creosols, eNoah (Chennai), Winspire; earlier stint at Citi. Education: B.Com/Finance at Vivekananda College, Chennai (1999–2002); Commerce at Madras University. Leads a team of 6 in marketing. Very active LinkedIn presence (500+ connections).',
+    background:'Commerce-educated Chennai professional with banking (Citi) background — unusual for a marketing leader, giving him financial product familiarity. Previously at eNoah — another company on FinSherpa\'s ICP list. Controls Inspirisys\'s external partnerships, speaker invitations, corporate events, and corporate communications. Active at Chennai CXO and AI conferences.',
+    finsherpa:'Most accessible first contact at Inspirisys. His role controls which external partners and speakers enter the Inspirisys ecosystem — making him a gateway for a FinSherpa financial wellness session for all employees. Personal Citi background means he understands financial products. Vivekananda College Chennai alumni network is shared across many Chennai finance and commerce professionals.',
+    hook:'"Your team makes Inspirisys visible to the world. Could FinSherpa be part of the story you tell your employees about their own financial futures?"',
+    tags:['Best gateway contact','Ex-Citi banking','Controls corporate events','500+ LinkedIn','Ex-eNoah','Vivekananda College'],
+    tagTypes:['t-grn','t-blue','t-grn','t-gold','t-blue','t-gold'],
+    li:'linkedin.com/in/yoursalesguy'
+  },
+  danny:{
+    priority:2, badgeColor:'#425790', badge:'P2 — BFSI Referral Partner',
+    name:'Dharanidhar Ramamoorthy (Danny)',
+    role:'General Manager Sales — Banking Practice',
+    stats:[{v:'20+ yrs',l:'BFSI Sales'},{v:'Singapore',l:'Int\'l Exp'},{v:'Banking',l:'CXO Network'},{v:'MBA',l:'Madras Univ'}],
+    about:'GM Sales–Banking Practice at Inspirisys since 2022 (DGM since 2011). Prior: Business Head–Banking & Insurance at Kumaran Systems (2008–2011); BD Manager at GoDB Tech, North America & Europe (2004–2008); E-commerce Consultant at Asiabiz Solutions, Singapore (2001–2004); Etrek Solutions, Singapore (1999–2001). Education: MBA in Systems, University of Madras (1998–2000).',
+    background:'20+ years selling IT solutions to banks and financial institutions across India. Singapore international experience. Managed banking accounts at national scale including government banks. Active LinkedIn presence celebrating company milestones. His client list includes senior bankers and CFOs across TN, national banks, and NBFC leadership.',
+    finsherpa:'Danny\'s BFSI client network is directly FinSherpa\'s target audience — every senior banker he works with is a potential FinSherpa client. Position as a mutual referral partner: Danny refers banking CXOs to FinSherpa, FinSherpa\'s credibility enhances Danny\'s own relationship value. Also a personal prospect — 20+ years in BFSI sales + Singapore background = accumulated income needing structured planning.',
+    hook:'"Your banking clients trust you with their technology decisions. If you introduce them to FinSherpa for their personal finances, that trust works both ways."',
+    tags:['Banking CXO network','Ex-Singapore','BFSI 20+ yrs','Referral partner angle','MBA Madras Univ'],
+    tagTypes:['t-grn','t-blue','t-gold','t-grn','t-gold'],
+    li:'linkedin.com/in/dharanidhar-sales-strategy-banking'
+  },
+  arvind:{
+    priority:3, badgeColor:'#2e7d4e', badge:'P3 — Monitor',
+    name:'Arvind Mishra',
+    role:'National Sales Head — BFSI',
+    stats:[{v:'Mumbai',l:'Location'},{v:'BFSI',l:'National Head'},{v:'Since 2014',l:'At ISL'},{v:'P3',l:'Priority'}],
+    about:'National Sales Head (BFSI) / DGM at Inspirisys since 2020, with earlier Account Manager BFSI role since 2014. Based in Mumbai. Education: BCA from IGNOU; Intermediate of Science from Jamshedpur Co-operative College.',
+    background:'BFSI sales specialist managing Inspirisys\'s national banking accounts from Mumbai. Manages large enterprise banking relationships across the country. Prior to Inspirisys had sales roles in IT solutions.',
+    finsherpa:'Lower immediate priority due to Mumbai base — FinSherpa\'s strength is currently in Chennai. However, his national BFSI client network has long-term value as FinSherpa expands. Monitor and re-engage when FinSherpa has a pan-India capability. Can be contacted via LinkedIn for market intelligence on banking CXO accessibility.',
+    hook:'"When FinSherpa expands nationally, your BFSI network across India will be invaluable. Let\'s stay in touch."',
+    tags:['Mumbai-based','National BFSI reach','Long-term asset','Monitor for now'],
+    tagTypes:['t-blue','t-grn','t-gold','t-gold'],
+    li:'linkedin.com/in/arvind-mishra-01643121'
+  },
+  shanmugam:{
+    priority:3, badgeColor:'#2e7d4e', badge:'P3 — Tech Leader Prospect',
+    name:'Shanmugam Ramanathan',
+    role:'Vice President — Product Engineering',
+    stats:[{v:'25+ yrs',l:'Tech Career'},{v:'Ex-Altimetrik',l:'8 years'},{v:'B.E.',l:'Tirunelveli'},{v:'CTO',l:'Was Co-founder'}],
+    about:'VP Product Engineering at Inspirisys since 2023. Prior: Engineering Leader – Product & Platform at Altimetrik (8 years); Director, Application Services at Congruent Info-Tech; Technical Project Manager at Congruent; Project Manager at Infosys; started career at Focus Infotech. Education: B.E. from Government College of Engineering, Tirunelveli / Manonmaniam Sundaranar University (1991–1995). ITIL V3 certified.',
+    background:'25+ years in product and platform engineering. Was co-founder/CTO of a stealth startup before joining Inspirisys in 2023. 8 years at Altimetrik means potential accumulated stock options. Active LinkedIn thought leader — writes substantively on engineering culture, agile, no-code/low-code platforms, and software development philosophy. 5 LinkedIn recommendations visible.',
+    finsherpa:'Tech leaders are classic underplanners for personal finance — they optimise systems for others but not their own portfolios. 25+ years of career earnings + Altimetrik options + early Infosys career = significant accumulated wealth. Co-founder history means entrepreneurial risk tolerance and potentially complex financial structures. Engage via LinkedIn content — comment authentically on his engineering posts before reaching out.',
+    hook:'"You\'ve built platforms for enterprises for 25 years. Is your own financial platform as well-engineered?"',
+    tags:['Ex-CTO/Co-founder','Altimetrik stock options','Tech underplanner profile','25+ yrs earnings','Infosys alumni'],
+    tagTypes:['t-gold','t-red','t-blue','t-gold','t-blue'],
+    li:'linkedin.com/in/shanmugamramanathan'
+  },
+  kangeyan:{
+    priority:3, badgeColor:'#2e7d4e', badge:'P3 — Largest Division Head',
+    name:'Kangeyan Gangadharan',
+    role:'President — Infra Products & Services',
+    stats:[{v:'President',l:'Role'},{v:'Largest',l:'Revenue Division'},{v:'Senior',l:'Long Tenure'},{v:'P3',l:'Priority'}],
+    about:'President–Infra Products & Services at Inspirisys, heading the company\'s largest revenue-generating division covering infrastructure, cloud, and managed services. Long-tenured senior leader within the organisation. Limited public social media presence.',
+    background:'Heads the single largest business unit at Inspirisys — the infrastructure and cloud practice, which serves telecom, enterprise, and government clients nationally. Works closely with Jayesh Ahluwalia (COO). Limited LinkedIn activity makes direct outreach harder.',
+    finsherpa:'President-level compensation at a listed IT company = significant wealth accumulation. Limited social presence means warm introduction is essential — approach via Murali, Balaji, or Jayesh once those relationships are established. Not a cold-approach candidate.',
+    hook:'"Once we\'ve been introduced by Murali or Balaji, the conversation about Kangeyan\'s personal finances opens naturally."',
+    tags:['Largest division head','Warm intro required','President level CTC','Long tenure ISL'],
+    tagTypes:['t-gold','t-blue','t-red','t-grn'],
+    li:null
+  }
+};
+
+function openModal(id) {
+  const p = P[id];
+  if (!p) return;
+  const tags = p.tags.map((t,i) => `<span class="tag ${p.tagTypes[i]}">${t}</span>`).join('');
+  const stats = p.stats.map(s => `<div class="stat-item"><div class="stat-v">${s.v}</div><div class="stat-l">${s.l}</div></div>`).join('');
+  const liBlock = p.li
+    ? `<div class="li-box">${p.li}</div>`
+    : `<div class="li-box" style="color:#999">LinkedIn profile not publicly indexed — search by name on LinkedIn</div>`;
+
+  document.getElementById('modal').innerHTML = `
+    <div class="modal-head">
+      <button class="close-btn" onclick="closeModal()">✕</button>
+      <span class="modal-priority" style="background:${p.badgeColor}">${p.badge}</span>
+      <div class="modal-name">${p.name}</div>
+      <div class="modal-role">${p.role}</div>
+    </div>
+    <div class="modal-body">
+      <div class="stats-row">${stats}</div>
+      <div class="sec-box">
+        <div class="sec-title">About</div>
+        <div class="modal-text">${p.about}</div>
+      </div>
+      <div class="sec-box">
+        <div class="sec-title">Background</div>
+        <div class="modal-text">${p.background}</div>
+      </div>
+      <div class="sec-box blue">
+        <div class="sec-title" style="color:#425790">FinSherpa Relevance</div>
+        <div class="modal-text">${p.finsherpa}</div>
+        <div class="tags">${tags}</div>
+      </div>
+      <div class="hook-box">
+        <div class="hook-label">Opening Hook for Babu</div>
+        <div class="hook-text">${p.hook}</div>
+      </div>
+      ${liBlock}
+    </div>`;
+  document.getElementById('overlay').classList.add('open');
+  document.body.style.overflow = 'hidden';
+}
+
+function closeModal() {
+  document.getElementById('overlay').classList.remove('open');
+  document.body.style.overflow = '';
+}
+
+function bgClose(e) {
+  if (e.target === document.getElementById('overlay')) closeModal();
+}
+
+document.addEventListener('keydown', e => { if (e.key === 'Escape') closeModal(); });
+</script>
+</body>
+</html>
