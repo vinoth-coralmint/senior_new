@@ -1,0 +1,459 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Reveleer GCC — FinSherpa Priority Map</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700&family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root {
+  --dusk:      #425790;
+  --dusk-dark: #2d3d66;
+  --dusk-lite: #6878b0;
+  --red:       #ff2731;
+  --lav:       #f6f0f8;
+  --plat:      #eaeeeb;
+  --grey:      #939393;
+  --ink:       #1a1a2e;
+  --white:     #ffffff;
+}
+* { margin:0; padding:0; box-sizing:border-box; }
+body { font-family:'DM Sans',sans-serif; background:#f0f2f8; color:var(--ink); }
+
+/* HEADER */
+.header {
+  background:var(--dusk-dark);
+  border-bottom:4px solid var(--red);
+  padding:20px 24px 18px;
+}
+.header h1 { font-family:'Playfair Display',serif; font-size:20px; color:#fff; }
+.header h1 span { color:var(--red); }
+.header p { font-size:11px; color:#8899bb; margin-top:4px; }
+.legend { display:flex; gap:14px; margin-top:12px; flex-wrap:wrap; }
+.leg { display:flex; align-items:center; gap:6px; font-size:11px; color:#aab; }
+.leg-dot { width:10px; height:10px; border-radius:50%; flex-shrink:0; }
+
+/* CHART */
+.chart-wrap { padding:28px 16px 12px; overflow-x:auto; }
+.org { display:flex; flex-direction:column; align-items:center; min-width:320px; }
+
+.lvl-label {
+  font-size:9px; font-weight:600; letter-spacing:2px; text-transform:uppercase;
+  color:var(--grey); margin:20px 0 10px; text-align:center;
+}
+
+.conn-v { width:2px; height:18px; background:var(--dusk-lite); opacity:.45; }
+
+.conn-h-row {
+  display:flex; align-items:flex-start; justify-content:center;
+  position:relative; width:100%;
+}
+.conn-h-row::before {
+  content:''; position:absolute; top:0; left:50%; transform:translateX(-50%);
+  height:2px; background:var(--dusk-lite); opacity:.35;
+  width:calc(100% - 60px); max-width:700px;
+}
+.branch { display:flex; flex-direction:column; align-items:center; flex:1; max-width:200px; min-width:110px; padding:0 5px; }
+.branch-v { width:2px; height:18px; background:var(--dusk-lite); opacity:.4; }
+
+/* NODE */
+.node {
+  border-radius:10px; padding:10px 12px; border-left:4px solid;
+  background:#fff; box-shadow:0 2px 8px rgba(0,0,0,.07);
+  cursor:pointer; transition:transform .18s, box-shadow .18s;
+  width:100%; text-align:left; position:relative;
+  -webkit-tap-highlight-color:transparent;
+}
+.node:hover, .node:active { transform:translateY(-2px); box-shadow:0 6px 18px rgba(0,0,0,.13); }
+.node.p1 { border-color:#ff2731; background:#fff8f8; }
+.node.p2 { border-color:#425790; background:#f5f7ff; }
+.node.p3 { border-color:#2e7d4e; background:#f4fbf6; }
+
+.node-badge {
+  position:absolute; top:8px; right:8px;
+  font-size:8px; font-weight:700; letter-spacing:.8px; text-transform:uppercase;
+  padding:2px 6px; border-radius:8px; color:#fff;
+}
+.p1 .node-badge { background:#ff2731; }
+.p2 .node-badge { background:#425790; }
+.p3 .node-badge { background:#2e7d4e; }
+
+.node-name { font-family:'Playfair Display',serif; font-size:12px; font-weight:600; color:var(--ink); line-height:1.3; padding-right:34px; }
+.node-role  { font-size:9.5px; color:var(--grey); margin-top:3px; line-height:1.35; }
+.node-hint  { font-size:8.5px; color:var(--dusk-lite); margin-top:4px; font-style:italic; }
+
+/* HERO */
+.node.hero { border-left:5px solid #ff2731; background:linear-gradient(135deg,#fff8f8,#fff); box-shadow:0 4px 20px rgba(255,39,49,.12); max-width:280px; padding:14px 16px; }
+.node.hero .node-name { font-size:15px; padding-right:52px; }
+.node.hero .node-role { font-size:11px; }
+.hero-crown { display:block; font-size:8.5px; font-weight:700; letter-spacing:1.2px; text-transform:uppercase; color:#ff2731; margin-bottom:5px; }
+
+/* MODAL */
+.overlay {
+  display:none; position:fixed; inset:0;
+  background:rgba(10,15,35,.65); z-index:200;
+  align-items:center; justify-content:center;
+  padding:16px; backdrop-filter:blur(3px);
+}
+.overlay.open { display:flex; }
+.modal {
+  background:#fff; border-radius:16px; max-width:480px; width:100%;
+  max-height:90vh; overflow-y:auto;
+  box-shadow:0 20px 60px rgba(0,0,0,.35);
+  animation:popIn .22s cubic-bezier(.34,1.56,.64,1) both;
+}
+@keyframes popIn {
+  from { opacity:0; transform:scale(.88) translateY(16px); }
+  to   { opacity:1; transform:scale(1) translateY(0); }
+}
+.modal-head { padding:20px 20px 16px; border-bottom:1px solid var(--lav); position:relative; }
+.close-btn {
+  position:absolute; top:14px; right:14px;
+  width:30px; height:30px; border-radius:50%; border:none;
+  background:var(--plat); color:var(--ink); font-size:16px;
+  cursor:pointer; display:flex; align-items:center; justify-content:center;
+}
+.close-btn:hover { background:#ddd; }
+.modal-priority {
+  display:inline-block; font-size:9px; font-weight:700; letter-spacing:1px;
+  text-transform:uppercase; padding:3px 9px; border-radius:10px; color:#fff; margin-bottom:8px;
+}
+.modal-name { font-family:'Playfair Display',serif; font-size:20px; font-weight:700; color:var(--ink); line-height:1.2; margin-bottom:4px; }
+.modal-role { font-size:12px; color:var(--grey); line-height:1.4; }
+
+.modal-body { padding:16px 20px 20px; display:flex; flex-direction:column; gap:12px; }
+.sec-title { font-size:9px; font-weight:700; letter-spacing:2px; text-transform:uppercase; color:var(--dusk-lite); margin-bottom:5px; }
+.sec-box { background:var(--lav); border-radius:8px; padding:12px 14px; }
+.sec-box.blue { background:#eef2ff; }
+.modal-text { font-size:12.5px; color:#2d3050; line-height:1.6; }
+
+.stats-row { display:flex; background:#f8f9ff; border-radius:8px; overflow:hidden; }
+.stat-item { flex:1; text-align:center; padding:10px 6px; border-right:1px solid #e8eaf8; }
+.stat-item:last-child { border-right:none; }
+.stat-v { font-family:'Playfair Display',serif; font-size:15px; font-weight:700; color:var(--dusk); }
+.stat-l { font-size:8.5px; color:var(--grey); text-transform:uppercase; letter-spacing:.5px; margin-top:2px; }
+
+.tags { display:flex; flex-wrap:wrap; gap:5px; margin-top:10px; }
+.tag { font-size:10px; padding:3px 8px; border-radius:5px; font-weight:500; }
+.t-red  { background:#fff0f0; color:#ff2731; border:1px solid #ffd0d2; }
+.t-blue { background:#eef2ff; color:#425790; border:1px solid #c5d0f0; }
+.t-gold { background:#fffbea; color:#7a5c00; border:1px solid #f5e07a; }
+.t-grn  { background:#eefbf2; color:#1a5c33; border:1px solid #9de0b6; }
+
+.hook-box { background:var(--ink); border-radius:8px; padding:12px 14px; }
+.hook-label { font-size:9px; color:#ff2731; font-weight:700; letter-spacing:1.5px; text-transform:uppercase; margin-bottom:6px; }
+.hook-text { font-size:12px; color:#fde68a; font-style:italic; line-height:1.6; }
+
+.li-box {
+  display:flex; align-items:center; gap:8px;
+  font-size:11px; color:var(--dusk); font-family:'DM Mono',monospace;
+  background:#f0f4ff; border-radius:6px; padding:8px 12px;
+}
+.li-box::before { content:'🔗'; }
+
+/* PATHWAYS */
+.pathways { background:var(--dusk-dark); padding:28px 20px 40px; }
+.pathways h2 { font-family:'Playfair Display',serif; font-size:18px; color:#fff; margin-bottom:4px; }
+.pathways .sub { font-size:11.5px; color:#8899bb; margin-bottom:20px; line-height:1.5; }
+
+.steps { display:flex; flex-direction:column; gap:10px; margin-bottom:24px; }
+.step { display:flex; gap:12px; align-items:flex-start; background:rgba(255,255,255,.05); border-radius:10px; padding:12px 14px; }
+.step-num { flex-shrink:0; width:24px; height:24px; border-radius:50%; background:var(--red); color:#fff; font-size:11px; font-weight:700; display:flex; align-items:center; justify-content:center; }
+.step-title { font-size:12.5px; font-weight:600; color:#fff; margin-bottom:3px; }
+.step-desc { font-size:11px; color:#9ab; line-height:1.5; }
+.step-desc strong { color:#c8d8f0; }
+
+.pway-grid { display:grid; grid-template-columns:1fr 1fr; gap:10px; }
+@media(max-width:480px) { .pway-grid { grid-template-columns:1fr; } }
+
+.pway-card { background:rgba(255,255,255,.06); border:1px solid rgba(255,255,255,.1); border-radius:10px; padding:14px; }
+.pway-badge { display:inline-block; font-size:8.5px; font-weight:700; letter-spacing:1px; text-transform:uppercase; padding:2px 7px; border-radius:8px; color:#fff; margin-bottom:7px; }
+.pb1 { background:#ff2731; } .pb2 { background:#425790; } .pb3 { background:#2e7d4e; }
+.pway-name { font-size:13px; font-weight:600; color:#fff; margin-bottom:2px; }
+.pway-role { font-size:10px; color:#7a8aaa; margin-bottom:8px; }
+.pway-why  { font-size:11px; color:#bbc8dc; line-height:1.5; margin-bottom:7px; }
+.pway-hook { font-size:11px; color:#fde68a; font-style:italic; border-left:2px solid var(--red); padding-left:8px; line-height:1.5; }
+
+/* FOOTER */
+.footer { background:#111827; padding:12px 20px; font-size:10px; color:#556; text-align:center; line-height:1.8; }
+
+::-webkit-scrollbar { width:5px; height:5px; }
+::-webkit-scrollbar-thumb { background:rgba(0,0,0,.15); border-radius:4px; }
+</style>
+</head>
+<body>
+
+<!-- HEADER -->
+<div class="header">
+  <h1>Reveleer GCC — <span>FinSherpa</span> Priority Map</h1>
+  <p>Chennai (OMR) · Est. March 2025 · ~78 professionals · Tap any card for full profile & outreach intel</p>
+  <div class="legend">
+    <div class="leg"><div class="leg-dot" style="background:#ff2731"></div>Priority 1 — Primary target</div>
+    <div class="leg"><div class="leg-dot" style="background:#425790"></div>Priority 2 — High value</div>
+    <div class="leg"><div class="leg-dot" style="background:#2e7d4e"></div>Priority 3 — Warm pathway</div>
+  </div>
+</div>
+
+<!-- ORG CHART -->
+<div class="chart-wrap">
+<div class="org">
+
+  <!-- Level 1: MD -->
+  <div class="lvl-label">GCC Head</div>
+  <div class="node hero p1" onclick="openModal('shan')">
+    <span class="hero-crown">⭐ Ultimate Target</span>
+    <div class="node-name">Shanmugam Nagappan</div>
+    <div class="node-role">Managing Director, India GCC</div>
+    <div class="node-hint">NIT Trichy · Harvard Exec Ed · 30+ yrs · 5th GCC he has built</div>
+    <div class="node-badge">P1</div>
+  </div>
+
+  <div class="conn-v"></div>
+
+  <!-- Level 2: Director -->
+  <div class="lvl-label">Director Level</div>
+  <div class="conn-h-row" style="max-width:480px;width:100%;">
+    <div class="branch">
+      <div class="branch-v"></div>
+      <div class="node p1" onclick="openModal('prashant')">
+        <div class="node-badge">P1</div>
+        <div class="node-name">Prashant Sanghavi</div>
+        <div class="node-role">Director — Head of Finance</div>
+        <div class="node-hint">~47 yrs · Ex-Freshworks · MBA ICFAI</div>
+      </div>
+    </div>
+    <div class="branch">
+      <div class="branch-v"></div>
+      <div class="node p2" onclick="openModal('manuj')">
+        <div class="node-badge">P2</div>
+        <div class="node-name">Manuj Mohla</div>
+        <div class="node-role">Programme Lead — GCC Setup</div>
+        <div class="node-hint">IIM Lucknow · 18+ yrs PM · Gurgaon</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="conn-v"></div>
+
+  <!-- Level 3: Connectors -->
+  <div class="lvl-label">Senior Leads — Warm Pathways</div>
+  <div class="conn-h-row" style="max-width:480px;width:100%;">
+    <div class="branch">
+      <div class="branch-v"></div>
+      <div class="node p3" onclick="openModal('narasimhan')">
+        <div class="node-badge">P3</div>
+        <div class="node-name">Narasimhan R</div>
+        <div class="node-role">TA & GCC Lead</div>
+        <div class="node-hint">18 recommendations · Gateway connector</div>
+      </div>
+    </div>
+    <div class="branch">
+      <div class="branch-v"></div>
+      <div class="node p3" onclick="openModal('pawan')">
+        <div class="node-badge">P3</div>
+        <div class="node-name">Pawan Chhikara</div>
+        <div class="node-role">Senior Engineer — IT Ops</div>
+        <div class="node-hint">Ex-Uber, IMMO · Gurugram</div>
+      </div>
+    </div>
+  </div>
+
+</div>
+</div>
+
+<!-- REACH PATHWAYS -->
+<div class="pathways">
+  <h2>Reach Pathways</h2>
+  <p class="sub">Sequenced strategy for Babu Krishnamurthy / FinSherpa to move from first contact to Shanmugam — the ultimate target.</p>
+
+  <div class="steps">
+    <div class="step">
+      <div class="step-num">1</div>
+      <div>
+        <div class="step-title">Week 1–2 · Connect Narasimhan R (Easiest Entry)</div>
+        <div class="step-desc">LinkedIn connect referencing GCC ecosystem or HR community. He's a professional connector with <strong>18 recommendations</strong> and 500+ connections. One message can unlock introductions to the entire org.</div>
+      </div>
+    </div>
+    <div class="step">
+      <div class="step-num">2</div>
+      <div>
+        <div class="step-title">Week 2–3 · Reach Prashant Sanghavi via Freshworks Alumni</div>
+        <div class="step-desc">Identify a shared <strong>Freshworks Chennai contact (2019–2025)</strong> and request a warm intro. Prashant is the primary wealth management prospect — ~47 yrs, senior finance director, recently changed jobs.</div>
+      </div>
+    </div>
+    <div class="step">
+      <div class="step-num">3</div>
+      <div>
+        <div class="step-title">Week 3–4 · Reach Shanmugam via GCC / Rotary / Event</div>
+        <div class="step-desc">Check LinkedIn 2nd-degree connections. Reference his <strong>GCC Next Summit 2025 panel</strong> or Agile Chennai talk. Hook: "You've built 5 GCCs across India. Who's building your financial peak?"</div>
+      </div>
+    </div>
+    <div class="step">
+      <div class="step-num">4</div>
+      <div>
+        <div class="step-title">Ongoing · B2B via HR / Wellness angle</div>
+        <div class="step-desc">Propose a <strong>Financial Wellness for GCC Professionals</strong> session — gives FinSherpa a stage in front of the full Reveleer India team and positions Babu as a trusted resource inside the org.</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="pway-grid">
+    <div class="pway-card">
+      <span class="pway-badge pb1">P1 Target</span>
+      <div class="pway-name">Prashant Sanghavi</div>
+      <div class="pway-role">Director — Head of Finance</div>
+      <div class="pway-why">~47 yrs, senior finance leader, just changed companies — perfect moment for a financial planning review. Ex-Freshworks network is the bridge.</div>
+      <div class="pway-hook">"You've built finance operations across Flex, Freshworks and now Reveleer. Is your personal wealth plan keeping pace?"</div>
+    </div>
+    <div class="pway-card">
+      <span class="pway-badge pb1">P1 Target</span>
+      <div class="pway-name">Shanmugam Nagappan</div>
+      <div class="pway-role">Managing Director, India GCC</div>
+      <div class="pway-why">Serial GCC builder, NIT Trichy + Harvard, very public figure. Rotary / Chennai business community is the natural channel. Unlocks entire org.</div>
+      <div class="pway-hook">"You've spent 30 years building capability centres for global companies. Who's building your own financial centre of excellence?"</div>
+    </div>
+    <div class="pway-card">
+      <span class="pway-badge pb2">P2 Target</span>
+      <div class="pway-name">Manuj Mohla</div>
+      <div class="pway-role">Programme Lead — GCC Setup</div>
+      <div class="pway-why">IIM Lucknow alumni, 18+ years in senior programme roles. His IIM network can also yield cross-referrals to other GCC leaders across Chennai.</div>
+      <div class="pway-hook">"An IIM education and 18 years of building complex programmes — your financial planning should be equally structured."</div>
+    </div>
+    <div class="pway-card">
+      <span class="pway-badge pb3">Gateway</span>
+      <div class="pway-name">Narasimhan R</div>
+      <div class="pway-role">TA & GCC Lead</div>
+      <div class="pway-why">Professional connector by trade. 500+ connections, 18 recommendations, active on HR forums. Single easiest person to reach — and he can introduce everyone else.</div>
+      <div class="pway-hook">"Every senior GCC hire is making big financial decisions at the moment of joining. Could FinSherpa be part of that onboarding?"</div>
+    </div>
+  </div>
+</div>
+
+<!-- FOOTER -->
+<div class="footer">
+  Reveleer GCC · OMR, Chennai · Opened March 2025 · ~78 employees (scaling) ·
+  Prepared for FinSherpa Investments Pvt Ltd · Babu Krishnamurthy
+</div>
+
+<!-- MODAL OVERLAY -->
+<div class="overlay" id="overlay" onclick="handleOverlayClick(event)">
+  <div class="modal" id="modal"></div>
+</div>
+
+<script>
+const P = {
+  shan:{
+    priority:1, badgeColor:'#ff2731', badge:'P1 — Ultimate Target',
+    name:'Shanmugam Nagappan',
+    role:'Managing Director, India GCC · Chennai',
+    stats:[{v:'30+ yrs',l:'Experience'},{v:'5th GCC',l:'He has built'},{v:'NIT Trichy',l:'Engineering'},{v:'Harvard',l:'Exec Ed'}],
+    about:'Veteran GCC builder who has set up India technology hubs from scratch at least five times across Oracle, Wolters Kluwer ELM, Replicon, OEConnection, IMMO, and now Reveleer. He joined Reveleer in February 2025 as founding MD of the India GCC in Chennai\'s OMR corridor.',
+    background:'Serial India GCC leader who brings a core team with him across companies — Narasimhan R and Pawan Chhikara both followed him from IMMO. He is publicly visible: panelist at GCC Next Summit 2025, speaker at Agile Chennai, and active LinkedIn poster. His profile shows 500+ connections.',
+    finsherpa:'Top of the org — reach him and you reach the entire GCC. At MD level of a fast-scaling healthtech GCC, his income and asset base is significant. His long career across multiple senior roles in global organisations means he likely has accumulated wealth that may be under-structured. The career transition moment (IMMO → Reveleer, 2025) is a natural financial review trigger.',
+    hook:'"You\'ve spent 30 years building global capability centres for some of the world\'s leading companies. Who\'s building your personal financial centre of excellence?"',
+    tags:['NIT Trichy alumni','Harvard Exec Ed','GCC Next Summit speaker','Serial GCC builder','5 hubs built'],
+    tagTypes:['t-blue','t-red','t-gold','t-gold','t-grn'],
+    li:'linkedin.com/in/nagappan'
+  },
+  prashant:{
+    priority:1, badgeColor:'#ff2731', badge:'P1 — Primary Prospect',
+    name:'Prashant Sanghavi',
+    role:'Director, Head of Finance GCC · Chennai',
+    stats:[{v:'~47 yrs',l:'Age'},{v:'20+ yrs',l:'Finance Career'},{v:'MBA',l:'ICFAI Finance'},{v:'Ex-FWS',l:'Freshworks'}],
+    about:'Senior finance leader who joined Reveleer GCC in February 2025 as Director and Head of Finance. Previously Senior Finance Manager at Freshworks Chennai (2019–2025), before which he held multiple senior finance roles at Flex (13 years, including Melbourne) and Honeywell.',
+    background:'Prashant\'s career spans HP, Honeywell, Flex (global, 13 yrs), Freshworks, and now Reveleer. He has built finance operations for global GCCs across different industries. His Freshworks stint gives him a dense Chennai corporate alumni network. ICFAI MBA batch of 2002–03.',
+    finsherpa:'PRIMARY TARGET. Textbook FinSherpa ICP — ~47 years old, Director-level finance professional, recently changed companies (Feb 2025 = new financial planning review moment), 20+ years of income accumulation. As Head of Finance he understands wealth structuring intellectually, but personal planning often lags career progression. Strong Freshworks alumni network is the natural warm intro bridge.',
+    hook:'"You\'ve structured the finances of GCCs across Flex, Freshworks, and now Reveleer. Is your personal financial plan built with the same rigour?"',
+    tags:['Primary ICP match','~47 yrs','Ex-Freshworks Chennai','Flex 13 yrs','New role = review moment','ICFAI MBA 2002'],
+    tagTypes:['t-red','t-red','t-gold','t-blue','t-grn','t-blue'],
+    li:'linkedin.com/in/prashantsanghavi'
+  },
+  manuj:{
+    priority:2, badgeColor:'#425790', badge:'P2 — Senior Prospect',
+    name:'Manuj Mohla',
+    role:'Programme Lead — GCC Establishment · Gurgaon (Remote)',
+    stats:[{v:'IIM',l:'Lucknow'},{v:'18+ yrs',l:'Programme Mgmt'},{v:'P2',l:'Priority'},{v:'Gurgaon',l:'Based'}],
+    about:'Experienced programme and project manager with 18+ years of delivering complex technology programmes. IIM Lucknow alumnus. Career includes Analec (financial research firm) and a likely prior stint at IMMO alongside Shanmugam. Now leading programme governance for the Reveleer GCC build-out.',
+    background:'His IIM Lucknow pedigree combined with a long career in senior programme roles places him in the ₹40–60L+ CTC range. He is based in Gurgaon, making him a remote contributor to the Chennai GCC — outreach is therefore digital-first. Active on LinkedIn, posting on AI transformation and GCC operations.',
+    finsherpa:'Solid P2 prospect. IIM background and 18+ years of senior delivery roles implies substantial accumulated wealth that may lack a structured plan. His IIM Lucknow network is also a rich cross-referral source — IIM alumni in Chennai GCCs tend to know each other and are high-value FinSherpa prospects.',
+    hook:'"An IIM education and 18 years of structuring complex programmes for global organisations — your personal financial plan should be built with the same discipline."',
+    tags:['IIM Lucknow alumni','18+ yrs Sr. PM','Climber cohort','IIM network referrals','Gurgaon — digital outreach'],
+    tagTypes:['t-red','t-blue','t-gold','t-grn','t-blue'],
+    li:'linkedin.com/in/manuj-mohla'
+  },
+  narasimhan:{
+    priority:3, badgeColor:'#2e7d4e', badge:'P3 — Gateway Connector',
+    name:'Narasimhan R',
+    role:'Talent Acquisition & GCC Lead · Bengaluru',
+    stats:[{v:'18',l:'Recommendations'},{v:'500+',l:'Connections'},{v:'Gateway',l:'Role'},{v:'IMMO',l:'Prior'}],
+    about:'Career GCC talent builder and people leader. Has followed Shanmugam Nagappan from IMMO to Reveleer, serving as the Talent Acquisition lead who builds out the full GCC workforce. He was explicitly named by Shanmugam in LinkedIn posts during IMMO as his go-to talent manager.',
+    background:'Bangalore University graduate. Active across SHRM, ETHRWorld, and HR forums. 18 LinkedIn recommendations — the highest trust signal in this group. By profession and temperament he is a networker and connector. Every senior hire into Reveleer GCC passes through him.',
+    finsherpa:'Not a primary wealth management prospect (HR/TA profile, Bengaluru-based) but the SINGLE EASIEST PERSON TO REACH in this org. One warm LinkedIn message can open introductions to Prashant, Shanmugam, and everyone else. Proposed hook: "Financial Onboarding for Reveleer GCC Senior Joiners" — every new Director-level hire is a FinSherpa prospect.',
+    hook:'"Every senior leader you bring into Reveleer GCC is navigating a new income package and financial complexity. Could FinSherpa be part of their onboarding journey?"',
+    tags:['Best gateway','18 LinkedIn recs','Follows Shan across companies','New hire pipeline access','HR forum active'],
+    tagTypes:['t-grn','t-red','t-gold','t-grn','t-blue'],
+    li:'linkedin.com/in/narasimhanprofile'
+  },
+  pawan:{
+    priority:3, badgeColor:'#2e7d4e', badge:'P3 — Back Channel',
+    name:'Pawan Chhikara',
+    role:'Senior Engineer — IT Operations · Gurugram',
+    stats:[{v:'Ex-Uber',l:'Prior Role'},{v:'IMMO',l:'Prior'},{v:'IT Ops',l:'Function'},{v:'Gurgaon',l:'Based'}],
+    about:'IT engineer who has followed Shanmugam Nagappan from IMMO to Reveleer, handling IT infrastructure and operations. Prior roles include Uber, Trusted Media Brands (TMB), and NSF International. BCom from Maharshi Dayanand University Rohtak.',
+    background:'Part of the trusted inner circle that Shan brings across companies. Gurugram-based with a digital-first work style. IT engineering profile — Uber alumni network is solid. His role at Reveleer is primarily infrastructure support for the GCC operations.',
+    finsherpa:'Lower direct priority — IT Engineer profile and Gurugram location places him outside the Chennai primary ICP. However as a trusted member of Shan\'s core team, a warm relationship here could provide a credible internal reference if needed. Uber alumni network may be a useful secondary connection source.',
+    hook:'"You\'ve supported some of the most high-growth technology organisations in India — Uber, IMMO, Reveleer. Your own financial growth deserves the same level of infrastructure."',
+    tags:['Shan\'s core circle','Ex-Uber','Back-channel reference','Gurgaon — digital only','Lower priority'],
+    tagTypes:['t-gold','t-blue','t-grn','t-blue','t-gold'],
+    li:'linkedin.com/in/pawan-chhikara-46972331'
+  }
+};
+
+function openModal(id) {
+  const p = P[id];
+  if (!p) return;
+  const tags = p.tags.map((t,i) => `<span class="tag ${p.tagTypes[i]}">${t}</span>`).join('');
+  const stats = p.stats.map(s => `<div class="stat-item"><div class="stat-v">${s.v}</div><div class="stat-l">${s.l}</div></div>`).join('');
+  document.getElementById('modal').innerHTML = `
+    <div class="modal-head">
+      <button class="close-btn" onclick="closeModal()">✕</button>
+      <span class="modal-priority" style="background:${p.badgeColor}">${p.badge}</span>
+      <div class="modal-name">${p.name}</div>
+      <div class="modal-role">${p.role}</div>
+    </div>
+    <div class="modal-body">
+      <div class="stats-row">${stats}</div>
+      <div class="sec-box">
+        <div class="sec-title">About</div>
+        <div class="modal-text">${p.about}</div>
+      </div>
+      <div class="sec-box">
+        <div class="sec-title">Background</div>
+        <div class="modal-text">${p.background}</div>
+      </div>
+      <div class="sec-box blue">
+        <div class="sec-title" style="color:#425790">FinSherpa Relevance</div>
+        <div class="modal-text">${p.finsherpa}</div>
+        <div class="tags">${tags}</div>
+      </div>
+      <div class="hook-box">
+        <div class="hook-label">Opening Hook</div>
+        <div class="hook-text">${p.hook}</div>
+      </div>
+      <div class="li-box">${p.li}</div>
+    </div>`;
+  document.getElementById('overlay').classList.add('open');
+  document.body.style.overflow = 'hidden';
+}
+
+function handleOverlayClick(e) {
+  if (e.target === document.getElementById('overlay')) closeModal();
+}
+
+function closeModal() {
+  document.getElementById('overlay').classList.remove('open');
+  document.body.style.overflow = '';
+}
+</script>
+</body>
+</html>
