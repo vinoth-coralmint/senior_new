@@ -1,0 +1,609 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Ashley GCC — FinSherpa Priority Map</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700&family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root {
+  --dusk:      #425790;
+  --dusk-dark: #2d3d66;
+  --dusk-lite: #6878b0;
+  --red:       #ff2731;
+  --lav:       #f6f0f8;
+  --plat:      #eaeeeb;
+  --grey:      #939393;
+  --ink:       #1a1a2e;
+  --white:     #ffffff;
+}
+* { margin:0; padding:0; box-sizing:border-box; }
+body { font-family:'DM Sans',sans-serif; background:#f0f2f8; color:var(--ink); }
+
+/* HEADER */
+.header {
+  background:var(--dusk-dark);
+  border-bottom:4px solid var(--red);
+  padding:20px 24px 18px;
+}
+.header h1 { font-family:'Playfair Display',serif; font-size:20px; color:#fff; }
+.header h1 span { color:var(--red); }
+.header p { font-size:11px; color:#8899bb; margin-top:4px; }
+.legend { display:flex; gap:14px; margin-top:12px; flex-wrap:wrap; }
+.leg { display:flex; align-items:center; gap:6px; font-size:11px; color:#aab; }
+.leg-dot { width:10px; height:10px; border-radius:50%; flex-shrink:0; }
+
+/* CHART */
+.chart-wrap { padding:28px 16px 12px; overflow-x:auto; }
+.org { display:flex; flex-direction:column; align-items:center; min-width:320px; }
+
+.lvl-label {
+  font-size:9px; font-weight:600; letter-spacing:2px; text-transform:uppercase;
+  color:var(--grey); margin:20px 0 10px; text-align:center;
+}
+
+.conn-v { width:2px; height:18px; background:var(--dusk-lite); opacity:.45; }
+
+.conn-h-row {
+  display:flex; align-items:flex-start; justify-content:center;
+  position:relative; width:100%;
+}
+.conn-h-row::before {
+  content:''; position:absolute; top:0; left:50%; transform:translateX(-50%);
+  height:2px; background:var(--dusk-lite); opacity:.35;
+  width:calc(100% - 60px); max-width:700px;
+}
+.branch { display:flex; flex-direction:column; align-items:center; flex:1; max-width:200px; min-width:110px; padding:0 5px; }
+.branch-v { width:2px; height:18px; background:var(--dusk-lite); opacity:.4; }
+
+/* NODE */
+.node {
+  border-radius:10px; padding:10px 12px; border-left:4px solid;
+  background:#fff; box-shadow:0 2px 8px rgba(0,0,0,.07);
+  cursor:pointer; transition:transform .18s, box-shadow .18s;
+  width:100%; text-align:left; position:relative;
+  -webkit-tap-highlight-color:transparent;
+}
+.node:hover, .node:active { transform:translateY(-2px); box-shadow:0 6px 18px rgba(0,0,0,.13); }
+.node.p1 { border-color:#ff2731; background:#fff8f8; }
+.node.p2 { border-color:#425790; background:#f5f7ff; }
+.node.p3 { border-color:#2e7d4e; background:#f4fbf6; }
+
+.node-badge {
+  position:absolute; top:8px; right:8px;
+  font-size:8px; font-weight:700; letter-spacing:.8px; text-transform:uppercase;
+  padding:2px 6px; border-radius:8px; color:#fff;
+}
+.p1 .node-badge { background:#ff2731; }
+.p2 .node-badge { background:#425790; }
+.p3 .node-badge { background:#2e7d4e; }
+
+.node-name { font-family:'Playfair Display',serif; font-size:12px; font-weight:600; color:var(--ink); line-height:1.3; padding-right:34px; }
+.node-role  { font-size:9.5px; color:var(--grey); margin-top:3px; line-height:1.35; }
+.node-hint  { font-size:8.5px; color:var(--dusk-lite); margin-top:4px; font-style:italic; }
+
+/* HERO */
+.node.hero { border-left:5px solid #ff2731; background:linear-gradient(135deg,#fff8f8,#fff); box-shadow:0 4px 20px rgba(255,39,49,.12); max-width:280px; padding:14px 16px; }
+.node.hero .node-name { font-size:15px; padding-right:52px; }
+.node.hero .node-role { font-size:11px; }
+.hero-crown { display:block; font-size:8.5px; font-weight:700; letter-spacing:1.2px; text-transform:uppercase; color:#ff2731; margin-bottom:5px; }
+
+/* MODAL */
+.overlay {
+  display:none; position:fixed; inset:0;
+  background:rgba(10,15,35,.65); z-index:200;
+  align-items:center; justify-content:center;
+  padding:16px; backdrop-filter:blur(3px);
+}
+.overlay.open { display:flex; }
+.modal {
+  background:#fff; border-radius:16px; max-width:480px; width:100%;
+  max-height:90vh; overflow-y:auto;
+  box-shadow:0 20px 60px rgba(0,0,0,.35);
+  animation:popIn .22s cubic-bezier(.34,1.56,.64,1) both;
+}
+@keyframes popIn {
+  from { opacity:0; transform:scale(.88) translateY(16px); }
+  to   { opacity:1; transform:scale(1) translateY(0); }
+}
+.modal-head { padding:20px 20px 16px; border-bottom:1px solid var(--lav); position:relative; }
+.close-btn {
+  position:absolute; top:14px; right:14px;
+  width:30px; height:30px; border-radius:50%; border:none;
+  background:var(--plat); color:var(--ink); font-size:16px;
+  cursor:pointer; display:flex; align-items:center; justify-content:center;
+}
+.close-btn:hover { background:#ddd; }
+.modal-priority {
+  display:inline-block; font-size:9px; font-weight:700; letter-spacing:1px;
+  text-transform:uppercase; padding:3px 9px; border-radius:10px; color:#fff; margin-bottom:8px;
+}
+.modal-name { font-family:'Playfair Display',serif; font-size:20px; font-weight:700; color:var(--ink); line-height:1.2; margin-bottom:4px; }
+.modal-role { font-size:12px; color:var(--grey); line-height:1.4; }
+
+.modal-body { padding:16px 20px 20px; display:flex; flex-direction:column; gap:12px; }
+.sec-title { font-size:9px; font-weight:700; letter-spacing:2px; text-transform:uppercase; color:var(--dusk-lite); margin-bottom:5px; }
+.sec-box { background:var(--lav); border-radius:8px; padding:12px 14px; }
+.sec-box.blue { background:#eef2ff; }
+.sec-box.dark { background:var(--ink); }
+.modal-text { font-size:12.5px; color:#2d3050; line-height:1.6; }
+.modal-text.light { color:#c0cce0; }
+
+.stats-row { display:flex; background:#f8f9ff; border-radius:8px; overflow:hidden; }
+.stat-item { flex:1; text-align:center; padding:10px 6px; border-right:1px solid #e8eaf8; }
+.stat-item:last-child { border-right:none; }
+.stat-v { font-family:'Playfair Display',serif; font-size:15px; font-weight:700; color:var(--dusk); }
+.stat-l { font-size:8.5px; color:var(--grey); text-transform:uppercase; letter-spacing:.5px; margin-top:2px; }
+
+.tags { display:flex; flex-wrap:wrap; gap:5px; margin-top:10px; }
+.tag { font-size:10px; padding:3px 8px; border-radius:5px; font-weight:500; }
+.t-red  { background:#fff0f0; color:#ff2731; border:1px solid #ffd0d2; }
+.t-blue { background:#eef2ff; color:#425790; border:1px solid #c5d0f0; }
+.t-gold { background:#fffbea; color:#7a5c00; border:1px solid #f5e07a; }
+.t-grn  { background:#eefbf2; color:#1a5c33; border:1px solid #9de0b6; }
+
+.hook-box { background:var(--ink); border-radius:8px; padding:12px 14px; }
+.hook-label { font-size:9px; color:#ff2731; font-weight:700; letter-spacing:1.5px; text-transform:uppercase; margin-bottom:6px; }
+.hook-text { font-size:12px; color:#fde68a; font-style:italic; line-height:1.6; }
+
+.li-box {
+  display:flex; align-items:center; gap:8px;
+  font-size:11px; color:var(--dusk); font-family:'DM Mono',monospace;
+  background:#f0f4ff; border-radius:6px; padding:8px 12px;
+}
+.li-box::before { content:'🔗'; }
+
+/* PATHWAYS */
+.pathways { background:var(--dusk-dark); padding:28px 20px 40px; }
+.pathways h2 { font-family:'Playfair Display',serif; font-size:18px; color:#fff; margin-bottom:4px; }
+.pathways .sub { font-size:11.5px; color:#8899bb; margin-bottom:20px; line-height:1.5; }
+
+.steps { display:flex; flex-direction:column; gap:10px; margin-bottom:24px; }
+.step { display:flex; gap:12px; align-items:flex-start; background:rgba(255,255,255,.05); border-radius:10px; padding:12px 14px; }
+.step-num { flex-shrink:0; width:24px; height:24px; border-radius:50%; background:var(--red); color:#fff; font-size:11px; font-weight:700; display:flex; align-items:center; justify-content:center; }
+.step-title { font-size:12.5px; font-weight:600; color:#fff; margin-bottom:3px; }
+.step-desc { font-size:11px; color:#9ab; line-height:1.5; }
+.step-desc strong { color:#c8d8f0; }
+
+.pway-grid { display:grid; grid-template-columns:1fr 1fr; gap:10px; }
+@media(max-width:480px) { .pway-grid { grid-template-columns:1fr; } }
+
+.pway-card { background:rgba(255,255,255,.06); border:1px solid rgba(255,255,255,.1); border-radius:10px; padding:14px; }
+.pway-badge { display:inline-block; font-size:8.5px; font-weight:700; letter-spacing:1px; text-transform:uppercase; padding:2px 7px; border-radius:8px; color:#fff; margin-bottom:7px; }
+.pb1 { background:#ff2731; } .pb2 { background:#425790; } .pb3 { background:#2e7d4e; }
+.pway-name { font-size:13px; font-weight:600; color:#fff; margin-bottom:2px; }
+.pway-role { font-size:10px; color:#7a8aaa; margin-bottom:8px; }
+.pway-why  { font-size:11px; color:#bbc8dc; line-height:1.5; margin-bottom:7px; }
+.pway-hook { font-size:11px; color:#fde68a; font-style:italic; border-left:2px solid var(--red); padding-left:8px; line-height:1.5; }
+
+/* FOOTER */
+.footer { background:#111827; padding:12px 20px; font-size:10px; color:#556; text-align:center; line-height:1.8; }
+.footer a { color:var(--dusk-lite); text-decoration:none; }
+
+::-webkit-scrollbar { width:5px; height:5px; }
+::-webkit-scrollbar-thumb { background:rgba(0,0,0,.15); border-radius:4px; }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <h1>Ashley GCC — <span>FinSherpa</span> Priority Map</h1>
+  <p>Chennai · Est. 2022 · 550+ professionals · Tap any card for full profile</p>
+  <div class="legend">
+    <div class="leg"><div class="leg-dot" style="background:#ff2731"></div>Priority 1 — Primary target</div>
+    <div class="leg"><div class="leg-dot" style="background:#425790"></div>Priority 2 — High value</div>
+    <div class="leg"><div class="leg-dot" style="background:#2e7d4e"></div>Priority 3 — Warm pathway</div>
+  </div>
+</div>
+
+<div class="chart-wrap">
+<div class="org">
+
+  <div class="lvl-label">GCC Head</div>
+  <div class="node hero p1" onclick="openModal('ravindran')">
+    <span class="hero-crown">⭐ Ultimate Target</span>
+    <div class="node-name">Ravindran Chandrasekaran</div>
+    <div class="node-role">Senior Director — GCC Strategy & Operations</div>
+    <div class="node-hint">~25 yrs · Certified Ind. Director · Author · Speaker</div>
+    <div class="node-badge">P1</div>
+  </div>
+
+  <div class="conn-v"></div>
+  <div class="lvl-label">Director Level</div>
+  <div class="conn-h-row" style="max-width:660px;width:100%;">
+    <div class="branch">
+      <div class="branch-v"></div>
+      <div class="node p1" onclick="openModal('sridhar')">
+        <div class="node-badge">P1</div>
+        <div class="node-name">Sridhar Rajagopalan</div>
+        <div class="node-role">Delivery Head — Analytics & AI</div>
+        <div class="node-hint">Ex-Ramco, CIBC · 20+ yrs</div>
+      </div>
+    </div>
+    <div class="branch">
+      <div class="branch-v"></div>
+      <div class="node p1" onclick="openModal('imran')">
+        <div class="node-badge">P1</div>
+        <div class="node-name">Mohammed Imran Siddique</div>
+        <div class="node-role">Director — Finance & Accounting</div>
+        <div class="node-hint">ICAI Qualified CA · Active LinkedIn</div>
+      </div>
+    </div>
+    <div class="branch">
+      <div class="branch-v"></div>
+      <div class="node p2" onclick="openModal('kadhar')">
+        <div class="node-badge">P2</div>
+        <div class="node-name">Kadhar K</div>
+        <div class="node-role">Director — Human Resources</div>
+        <div class="node-hint">18+ yrs · Gateway to 550 employees</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="conn-v"></div>
+  <div class="lvl-label">Senior Manager Level</div>
+  <div class="conn-h-row" style="max-width:760px;width:100%;">
+    <div class="branch">
+      <div class="branch-v"></div>
+      <div class="node p2" onclick="openModal('sam')">
+        <div class="node-badge">P2</div>
+        <div class="node-name">Sam Jacob</div>
+        <div class="node-role">Head — Learning & Development</div>
+        <div class="node-hint">Financial wellness angle</div>
+      </div>
+    </div>
+    <div class="branch">
+      <div class="branch-v"></div>
+      <div class="node p2" onclick="openModal('dhinakaran')">
+        <div class="node-badge">P2</div>
+        <div class="node-name">Dhinakaran Kumaraswami</div>
+        <div class="node-role">Senior Manager — IT</div>
+        <div class="node-hint">Ex-Director Cheers Interactive</div>
+      </div>
+    </div>
+    <div class="branch">
+      <div class="branch-v"></div>
+      <div class="node p2" onclick="openModal('bala')">
+        <div class="node-badge">P2</div>
+        <div class="node-name">Balasubramanian P</div>
+        <div class="node-role">Sr. Manager — Data Engineering</div>
+        <div class="node-hint">High-growth domain</div>
+      </div>
+    </div>
+    <div class="branch">
+      <div class="branch-v"></div>
+      <div class="node p3" onclick="openModal('sriram')">
+        <div class="node-badge">P3</div>
+        <div class="node-name">Sriram Krishnamurthy</div>
+        <div class="node-role">Enterprise Agile Coach</div>
+        <div class="node-hint">27+ yrs · Pre-retiree cohort</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="conn-v"></div>
+  <div class="lvl-label">Manager Level — Warm Pathways</div>
+  <div class="conn-h-row" style="max-width:580px;width:100%;">
+    <div class="branch">
+      <div class="branch-v"></div>
+      <div class="node p3" onclick="openModal('isaac')">
+        <div class="node-badge">P3</div>
+        <div class="node-name">Isaac K</div>
+        <div class="node-role">Sr. Manager — TA Head</div>
+        <div class="node-hint">New senior hire pipeline</div>
+      </div>
+    </div>
+    <div class="branch">
+      <div class="branch-v"></div>
+      <div class="node p3" onclick="openModal('venkat')">
+        <div class="node-badge">P3</div>
+        <div class="node-name">Venkat Subramanian</div>
+        <div class="node-role">Manager — Talent Acquisition</div>
+        <div class="node-hint">19+ yrs · Chennai GCC network</div>
+      </div>
+    </div>
+    <div class="branch">
+      <div class="branch-v"></div>
+      <div class="node p3" onclick="openModal('joe')">
+        <div class="node-badge">P3</div>
+        <div class="node-name">Joe Sherine</div>
+        <div class="node-role">Lead — HRBP</div>
+        <div class="node-hint">Close to all employees</div>
+      </div>
+    </div>
+  </div>
+
+</div>
+</div>
+
+<!-- REACH PATHWAYS -->
+<div class="pathways">
+  <h2>Reach Pathways</h2>
+  <p class="sub">Sequenced strategy to move from first contact to Ravindran — the ultimate target.</p>
+
+  <div class="steps">
+    <div class="step">
+      <div class="step-num">1</div>
+      <div>
+        <div class="step-title">Week 1–2 · Connect Imran Siddique</div>
+        <div class="step-desc">Easiest first conversation — CA to CA. Reference his <strong>ICAI LinkedIn activity</strong>. Opening: ESOP tax planning angle.</div>
+      </div>
+    </div>
+    <div class="step">
+      <div class="step-num">2</div>
+      <div>
+        <div class="step-title">Week 2–3 · Reach Ravindran directly</div>
+        <div class="step-desc">Reference his <strong>GCC Workplace Awards 2025 speech</strong> or published book. Hook: "You've built a 550-person GCC. Who's building your financial peak?"</div>
+      </div>
+    </div>
+    <div class="step">
+      <div class="step-num">3</div>
+      <div>
+        <div class="step-title">Week 3–4 · B2B via Kadhar (HR Director)</div>
+        <div class="step-desc">Propose a <strong>Financial Wellness for GCC Professionals</strong> lunch session — gives FinSherpa a stage in front of all 550 employees.</div>
+      </div>
+    </div>
+    <div class="step">
+      <div class="step-num">4</div>
+      <div>
+        <div class="step-title">Ongoing · TA pipeline via Isaac & Venkat</div>
+        <div class="step-desc">Every new <strong>Director-level hire</strong> is a perfect FinSherpa target. Offer a "Financial Onboarding for GCC Senior Joiners" session.</div>
+      </div>
+    </div>
+    <div class="step">
+      <div class="step-num">5</div>
+      <div>
+        <div class="step-title">Event lever · Ravindran's next public appearance</div>
+        <div class="step-desc">Ravindran speaks at <strong>NASSCOM, CII, GCC forums</strong>. In-person introductions create the warmest entry.</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="pway-grid">
+    <div class="pway-card">
+      <span class="pway-badge pb1">P1 Entry</span>
+      <div class="pway-name">Mohammed Imran Siddique</div>
+      <div class="pway-role">Director — Finance & Accounting</div>
+      <div class="pway-why">CA background. Active LinkedIn. Natural ESOP & tax planning conversation.</div>
+      <div class="pway-hook">"Your ESOP vests in USD. Your tax plan didn't."</div>
+    </div>
+    <div class="pway-card">
+      <span class="pway-badge pb1">P1 Target</span>
+      <div class="pway-name">Ravindran Chandrasekaran</div>
+      <div class="pway-role">Senior Director — GCC Strategy</div>
+      <div class="pway-why">₹1Cr+ CTC, ESOP-eligible, author. 25 years of wealth likely unstructured.</div>
+      <div class="pway-hook">"You've built a GCC. Who's building your financial peak?"</div>
+    </div>
+    <div class="pway-card">
+      <span class="pway-badge pb1">P1 High Value</span>
+      <div class="pway-name">Sridhar Rajagopalan</div>
+      <div class="pway-role">Delivery Head — Analytics & AI</div>
+      <div class="pway-why">Banking background. Data-driven. Responds to modelled financial outcomes.</div>
+      <div class="pway-hook">"You model data for business. Model your corpus too."</div>
+    </div>
+    <div class="pway-card">
+      <span class="pway-badge pb2">P2 Gateway</span>
+      <div class="pway-name">Kadhar K</div>
+      <div class="pway-role">HR Director</div>
+      <div class="pway-why">One "yes" from Kadhar = room with every P1 target simultaneously.</div>
+      <div class="pway-hook">Propose a Financial Wellness session for the GCC.</div>
+    </div>
+    <div class="pway-card">
+      <span class="pway-badge pb3">P3 Referral</span>
+      <div class="pway-name">Isaac K + Venkat</div>
+      <div class="pway-role">TA Head + TA Manager</div>
+      <div class="pway-why">Control senior hiring pipeline — new Director hires = immediate FinSherpa prospect.</div>
+      <div class="pway-hook">Offer a "new joiner financial onboarding" session.</div>
+    </div>
+    <div class="pway-card">
+      <span class="pway-badge pb3">P3 Walk-in</span>
+      <div class="pway-name">Joe Sherine</div>
+      <div class="pway-role">Lead HRBP</div>
+      <div class="pway-why">Closest to employees daily. Organic referrals through benefits and career conversations.</div>
+      <div class="pway-hook">Build rapport — offer a complimentary financial review.</div>
+    </div>
+  </div>
+</div>
+
+<div class="footer">
+  Ashley GCC Priority Intelligence · FinSherpa Investments Pvt Ltd · March 2026 · Confidential<br>
+  <a href="https://www.finsherpa.com">finsherpa.com</a> · +91-9159269900 · info@finsherpa.com
+</div>
+
+<!-- MODAL -->
+<div class="overlay" id="overlay" onclick="closeBg(event)">
+  <div class="modal" id="modal"></div>
+</div>
+
+<script>
+const P = {
+  ravindran:{
+    priority:1, badgeColor:'#ff2731', badge:'P1 — Ultimate Target',
+    name:'Ravindran Chandrasekaran',
+    role:'Senior Director, GCC Strategy & Operations',
+    stats:[{v:'~25 yrs',l:'Experience'},{v:'2.5 yrs',l:'At Ashley'},{v:'550+',l:'Team Built'},{v:'IND Cert.',l:'Ind. Director'}],
+    about:'Led Ashley GCC from zero to 550+ professionals across 25+ capabilities in 2.5 years — one of Chennai\'s fastest GCC scale-ups. Certified Independent Director (IICA). Published author. Speaker at GCC Workplace Awards 2025 and NASSCOM forums.',
+    background:'Prior leadership at GS Lab/GAVS (Sr. Director), CBTS, and Cognizant. Deep IT delivery, transformation, and strategy background. ~25 years total experience.',
+    finsherpa:'Highest-value target in the org. Likely ₹1Cr+ CTC with ESOP exposure from Ashley Furniture (US-HQ\'d parent). 25 years of income = significant but likely unstructured wealth. Retirement and estate planning are imminent priorities. Intellectual engagement resonates — he\'s an author and speaker.',
+    hook:'"You\'ve built a 550-person global capability centre in 2.5 years. Who is building your personal financial peak at the same speed?"',
+    tags:['₹1Cr+ CTC est.','ESOP likely','Author & Speaker','GCC Awards 2025 Speaker','Certified Ind. Director'],
+    tagTypes:['t-red','t-red','t-gold','t-gold','t-blue'],
+    li:'linkedin.com/in/ravindran-chandrasekaran-7520131a'
+  },
+  sridhar:{
+    priority:1, badgeColor:'#ff2731', badge:'P1 — High Value',
+    name:'Sridhar Rajagopalan',
+    role:'Delivery Head — Business Analytics & AI Innovation',
+    stats:[{v:'20+ yrs',l:'Experience'},{v:'CIBC',l:'Banking BG'},{v:'Ramco',l:'Prior Role'},{v:'₹80L+',l:'CTC est.'}],
+    about:'Leads Business Analytics and AI Innovation delivery at Ashley GCC. Prior Senior Director at Ramco Logistics and Director at CIBC (Canadian Imperial Bank of Commerce).',
+    background:'Deep expertise in data, AI/ML, and analytics delivery. Banking background (CIBC) means financial sophistication. ~20+ years across IT and analytics leadership.',
+    finsherpa:'Analytically minded — will respond to data-modelled financial outcomes. CIBC banking background means he\'s financially aware but likely hasn\'t structured personal wealth. Likely holds accumulated RSUs/ESOPs from prior roles. Best angle: show him the numbers.',
+    hook:'"You model data to drive business decisions every day. When did you last model your retirement corpus against real inflation and longevity?"',
+    tags:['₹80L+ CTC est.','Ex-CIBC Banking','Ex-Ramco Sr Director','Analytics mindset','ESOP eligible'],
+    tagTypes:['t-red','t-blue','t-blue','t-gold','t-red'],
+    li:'linkedin.com/in/sridhar-rajagopalan'
+  },
+  imran:{
+    priority:1, badgeColor:'#ff2731', badge:'P1 — Best Entry Point',
+    name:'Mohammed Imran Siddique',
+    role:'Director — Finance & Accounting',
+    stats:[{v:'ICAI',l:'Qualified CA'},{v:'₹80L+',l:'CTC est.'},{v:'Active',l:'LinkedIn'},{v:'GCC',l:'Finance Head'}],
+    about:'Director of Finance & Accounting for the entire Ashley GCC. ICAI-qualified Chartered Accountant. Actively engaged on LinkedIn around CA education, ICAI initiatives, and GCC finance best practices.',
+    background:'Manages full finance and accounting function for 550+ employee GCC. Involved in ESOP administration, inter-company transactions, and treasury operations for the India entity.',
+    finsherpa:'Single best first conversation in this org. As a CA, he speaks FinSherpa\'s language exactly — tax efficiency, ESOP planning, capital gains structuring. Likely has personal ESOP events from Ashley Furniture (US-listed parent). Active on LinkedIn = warm connect pathway.',
+    hook:'"You\'ve spent years helping the company optimise its financial structure. When did you last do the same for your own portfolio — especially your ESOP position?"',
+    tags:['ICAI Qualified CA','₹80L+ CTC est.','ESOP events likely','Active LinkedIn','Tax planning angle'],
+    tagTypes:['t-blue','t-red','t-red','t-gold','t-gold'],
+    li:'linkedin.com/in/mohammedimransiddique'
+  },
+  kadhar:{
+    priority:2, badgeColor:'#425790', badge:'P2 — Strategic Gateway',
+    name:'Kadhar K (Mohammuad)',
+    role:'Director — Human Resources',
+    stats:[{v:'18+ yrs',l:'HR Experience'},{v:'Team 40',l:'Direct Reports'},{v:'MBA',l:'ICFAI'},{v:'2025',l:'Awards Speaker'}],
+    about:'HR Director leading a 40-person HR function at Ashley GCC. Spoke at GCC Workplace Awards 2025 (same event as Ravindran). Prior roles at GS Lab/GAVS, Sun TV Network, Star TV, and Adecco.',
+    background:'MBA from ICFAI. 18+ years across HR in media, staffing, and technology GCCs. Well-networked within Chennai\'s GCC HR community. Knows every employee personally or through his team.',
+    finsherpa:'Not a primary financial target but the most strategic gateway. A warm relationship opens two doors: (1) employee financial wellness sessions with all 550 staff and (2) warm introductions to every P1 leader. One "yes" from Kadhar = a room with every Priority 1 target.',
+    hook:'Propose a "Financial Wellness for GCC Professionals" lunch session — position it as an employee benefit. Kadhar champions it; FinSherpa gets the stage.',
+    tags:['Gateway to 550 employees','GCC Awards Speaker','Ex-GS Lab','Ex-Sun TV','B2B opportunity'],
+    tagTypes:['t-red','t-gold','t-blue','t-blue','t-grn'],
+    li:'linkedin.com/in/kadhar-mohammuad-m-k-61294911a'
+  },
+  sam:{
+    priority:2, badgeColor:'#425790', badge:'P2 — High Value',
+    name:'Sam Jacob',
+    role:'Head — Learning & Development',
+    stats:[{v:'L&D',l:'Function Head'},{v:'550+',l:'Staff Reach'},{v:'P2',l:'Priority'},{v:'Wellness',l:'B2B angle'}],
+    about:'Leads Learning & Development for all of Ashley GCC, covering capability building, upskilling programs, and leadership development for 550+ employees.',
+    background:'L&D professional managing training and development investments in a fast-scaling GCC environment.',
+    finsherpa:'Dual angle: Sam is personally a FinSherpa prospect AND is a gateway for a "Financial Literacy" module in Ashley GCC\'s learning programs — a content partnership distributing FinSherpa to all employees. Best framing: financial planning as a capability that improves employee retention and focus.',
+    hook:'"Financial stress is the #1 productivity killer for mid-career professionals. Could we build a personal finance module for your leadership development track?"',
+    tags:['Personal target','B2B learning module','Access to all staff','Financial wellness angle'],
+    tagTypes:['t-red','t-grn','t-gold','t-gold'],
+    li:'linkedin.com/in/sam-jacob-ashley-gcc'
+  },
+  dhinakaran:{
+    priority:2, badgeColor:'#425790', badge:'P2 — Climber Cohort',
+    name:'Dhinakaran Kumaraswami',
+    role:'Senior Manager — IT',
+    stats:[{v:'15+ yrs',l:'Experience'},{v:'B.E.',l:'Electronics'},{v:'Director',l:'Prior Title'},{v:'₹45–60L',l:'CTC est.'}],
+    about:'Senior IT Manager at Ashley GCC covering cloud, cybersecurity, and data centre infrastructure. B.E. Electronics, University of Madras. Prior Director IT at Cheers Interactive, Sr Manager at Solverminds, Plintron, and GAVS Technologies.',
+    background:'Had a Director-level title before joining Ashley at Sr Manager — suggests a deliberate GCC move. 15+ years in IT infrastructure across multiple organisations.',
+    finsherpa:'Classic Cohort 2 (The Climber) profile. Prior Director title + growing income in high-demand cloud/infra domain. Likely ₹45–60L CTC with upward trajectory. Income may have recently jumped — a classic moment where planning lags income.',
+    hook:'"Your domain is one of the most in-demand in every GCC right now. Is your wealth growing as fast as your market value?"',
+    tags:['Ex-Director Cheers','Ex-GAVS','Climber cohort','₹45–60L CTC est.','Cloud + Infra lead'],
+    tagTypes:['t-blue','t-blue','t-gold','t-red','t-grn'],
+    li:'linkedin.com/in/dhinakaran-kumaraswami'
+  },
+  bala:{
+    priority:2, badgeColor:'#425790', badge:'P2 — High Growth Domain',
+    name:'Balasubramanian Pitchairaman',
+    role:'Senior Manager — Data Engineering & Analytics',
+    stats:[{v:'Data Eng',l:'Function'},{v:'High',l:'Domain Demand'},{v:'12–18 yrs',l:'Est. Exp.'},{v:'P2',l:'Priority'}],
+    about:'Leads Data Engineering and Analytics at Ashley GCC. Data engineering is one of the highest-demand and fastest-growing compensation domains across the GCC ecosystem.',
+    background:'Senior Manager in data engineering — a domain where market rates have appreciated sharply over the last 3–5 years. Likely manages a team of data engineers and analysts.',
+    finsherpa:'Data engineering professionals in GCCs have seen sharp income growth recently — classic Cohort 2 (The Climber). Income has likely outpaced financial planning. GCC context also means potential ESOPs from the US parent (Ashley Furniture).',
+    hook:'"Data engineering is one of the highest-value skills in any GCC. Is your personal financial plan reflecting what you\'re actually worth in the market?"',
+    tags:['High-growth domain','Climber cohort','ESOP possible','Data/analytics leader'],
+    tagTypes:['t-gold','t-gold','t-red','t-blue'],
+    li:'linkedin.com/in/balasubramanian-pitchairaman'
+  },
+  sriram:{
+    priority:3, badgeColor:'#2e7d4e', badge:'P3 — Pre-Retiree',
+    name:'Sriram Krishnamurthy',
+    role:'Enterprise Agile Coach',
+    stats:[{v:'27+ yrs',l:'IT Leadership'},{v:'Agile',l:'Coach'},{v:'P3',l:'Priority'},{v:'Transition',l:'Cohort'}],
+    about:'27+ years of IT leadership, now operating as Enterprise Agile Coach. Long career in IT delivery and transformation — cross-functional exposure across GCC and enterprise environments.',
+    background:'One of the most experienced individuals in the Ashley GCC setup. The coaching role suggests a transition from delivery leadership to advisory — a common signal of later career phase.',
+    finsherpa:'Classic Cohort 3 (Pre-Retiree / Transition Seeker). 27 years = significant wealth accumulated but likely unstructured. The "coach" title signals someone thinking about legacy and next chapter. Distribution phase planning, estate structuring, and monthly income modelling are all relevant.',
+    hook:'"27 years of building and coaching organisations. What does your next chapter look like — and is your wealth ready to support it?"',
+    tags:['27+ yrs experience','Pre-retiree cohort','Transition signal','Estate planning angle'],
+    tagTypes:['t-blue','t-gold','t-gold','t-grn'],
+    li:'linkedin.com/in/sriramkrishnamurthy'
+  },
+  isaac:{
+    priority:3, badgeColor:'#2e7d4e', badge:'P3 — Connector',
+    name:'Isaac K',
+    role:'Senior Manager — Talent Acquisition (TA Head)',
+    stats:[{v:'TA Head',l:'Function'},{v:'550+',l:'Org Access'},{v:'Gateway',l:'New Hires'},{v:'P3',l:'Priority'}],
+    about:'Heads Talent Acquisition for Ashley GCC, overseeing recruitment across all 25+ capability areas. Controls the hiring pipeline for new senior joiners across the entire organisation.',
+    background:'Senior TA leader managing a full-cycle recruitment function in a fast-scaling GCC. Direct access to incoming talent at all levels.',
+    finsherpa:'Every new Director or Sr Manager hire is a potential FinSherpa prospect — income event, possible ESOP package, new financial complexity. If Isaac knows FinSherpa, he can warm-introduce every new senior hire. Proposed hook: "Financial Onboarding for GCC Senior Joiners."',
+    hook:'"Every senior hire you bring in is navigating a new income package and ESOP plan. Could FinSherpa be part of their onboarding?"',
+    tags:['New hire pipeline','Gateway to all levels','Referral node','Ongoing lead flow'],
+    tagTypes:['t-grn','t-grn','t-gold','t-blue'],
+    li:'linkedin.com/in/isaac-k-ashley-gcc'
+  },
+  venkat:{
+    priority:3, badgeColor:'#2e7d4e', badge:'P3 — Network Node',
+    name:'Venkat Subramanian',
+    role:'Manager — Talent Acquisition (GCC)',
+    stats:[{v:'19+ yrs',l:'Recruitment'},{v:'SRM',l:'University'},{v:'GCC',l:'Network'},{v:'P3',l:'Priority'}],
+    about:'Manages GCC talent acquisition execution at Ashley. 19+ years in recruitment. SRM University graduate. Well-networked across Chennai\'s GCC ecosystem from years of recruiting into multiple organisations.',
+    background:'Long-tenured recruitment professional with broad network across Chennai GCC talent community. Prior experience across multiple organisations before joining Ashley.',
+    finsherpa:'Venkat\'s value is his Chennai GCC network breadth — 19 years of recruiting means he personally knows hundreds of senior GCC professionals across Chennai. A warm relationship could yield referrals well beyond Ashley GCC. He\'s also a personal prospect himself.',
+    hook:'"19 years of placing senior GCC talent in Chennai — you know everyone. We\'d love to share what we\'re building for GCC professionals\' financial wellbeing."',
+    tags:['19+ yrs network','Chennai GCC connections','Personal prospect','Referral source'],
+    tagTypes:['t-gold','t-grn','t-blue','t-blue'],
+    li:'linkedin.com/in/venkat-subramanian-25494616'
+  },
+  joe:{
+    priority:3, badgeColor:'#2e7d4e', badge:'P3 — Walk-in Path',
+    name:'Joe Sherine',
+    role:'Lead — HRBP',
+    stats:[{v:'HRBP',l:'Function'},{v:'MSW HR',l:'PSG College'},{v:'TVS',l:'Prior Role'},{v:'P3',l:'Priority'}],
+    about:'Lead HR Business Partner at Ashley GCC. MSW in HR from PSG College of Arts & Science. Prior roles at TVS Motor Company, Dvara KGFS, and Neuberg Diagnostics.',
+    background:'HRBP profile means close contact with employees across all business units. PSG College graduate, grounded in South India talent ecosystem.',
+    finsherpa:'Joe sits closest to employees in daily reality. Salary, benefits, promotions, and career transitions naturally touch on financial planning. A warm personal relationship here means FinSherpa gets mentioned organically in the right moments. Dvara KGFS background (financial inclusion) suggests natural affinity for financial wellness conversations.',
+    hook:'"Your role keeps you close to people navigating career and income changes. FinSherpa helps GCC professionals make sense of those transitions financially."',
+    tags:['Close to all employees','Ex-TVS Motor','Ex-Dvara KGFS','MSW HR PSG College'],
+    tagTypes:['t-grn','t-blue','t-blue','t-gold'],
+    li:'linkedin.com/in/joe-sherine'
+  }
+};
+
+function openModal(id) {
+  const p = P[id];
+  if (!p) return;
+  const tags = p.tags.map((t,i) => `<span class="tag ${p.tagTypes[i]}">${t}</span>`).join('');
+  const stats = p.stats.map(s => `<div class="stat-item"><div class="stat-v">${s.v}</div><div class="stat-l">${s.l}</div></div>`).join('');
+  document.getElementById('modal').innerHTML = `
+    <div class="modal-head">
+      <button class="close-btn" onclick="closeModal()">✕</button>
+      <span class="modal-priority" style="background:${p.badgeColor}">${p.badge}</span>
+      <div class="modal-name">${p.name}</div>
+      <div class="modal-role">${p.role}</div>
+    </div>
+    <div class="modal-body">
+      <div class="stats-row">${stats}</div>
+      <div class="sec-box">
+        <div class="sec-title">About</div>
+        <div class="modal-text">${p.about}</div>
+      </div>
+      <div class="sec-box">
+        <div class="sec-title">Background</div>
+        <div class="modal-text">${p.background}</div>
+      </div>
+      <div class="sec-box blue">
+        <div class="sec-title" style="color:#425790">FinSherpa Relevance</div>
+        <div class="modal-text">${p.finsherpa}</div>
+        <div class="tags">${tags}</div>
+      </div>
+      <div class="hook-box">
+        <div class="hook-label">Opening Hook</div>
+        <div class="hook-text">${p.hook}</div>
+      </div>
+      <div class="li-box">${p.li}</div>
+    </div>`;
+  document.getElementById('overlay').classList.add('open');
+  document.body.style.overflow = 'hidden';
+}
+function closeModal() {
+  document.getElementById('overlay').classList.remove('open');
+  document.body.style.overflow = '';
+}
+function closeBg(e) { if (e.target === document.getElementById('overlay')) closeModal(); }
+document.addEventListener('keydown', e => { if (e.key === 'Escape') closeModal(); });
+</script>
+</body>
+</html>
