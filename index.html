@@ -1,0 +1,415 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>FinSherpa — Intelligence Hub</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,600;0,700;1,600&family=DM+Sans:wght@300;400;500;600&display=swap');
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg:      #0f1120;
+    --surface: #171a2e;
+    --surface2:#1e2240;
+    --border:  rgba(255,255,255,0.07);
+    --text:    #e8ecf4;
+    --muted:   #6a748a;
+    --dusk:    #425790;
+    --dusk-l:  #6878b0;
+    --red:     #ff2731;
+    --lav:     #f6f0f8;
+  }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'DM Sans', sans-serif;
+    min-height: 100vh;
+    padding: 56px 24px 80px;
+  }
+
+  /* subtle grid texture */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image:
+      linear-gradient(rgba(66,87,144,0.04) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(66,87,144,0.04) 1px, transparent 1px);
+    background-size: 40px 40px;
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  header, main, footer { position: relative; z-index: 1; }
+
+  /* ── HEADER ── */
+  header {
+    max-width: 660px;
+    margin: 0 auto 52px;
+  }
+
+  .logo-row {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    margin-bottom: 18px;
+  }
+
+  .logo-mark {
+    width: 44px;
+    height: 44px;
+    border-radius: 12px;
+    background: linear-gradient(135deg, var(--dusk) 0%, #2d3d66 100%);
+    border: 1px solid rgba(255,255,255,0.12);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 20px;
+    flex-shrink: 0;
+    box-shadow: 0 4px 16px rgba(66,87,144,0.35);
+  }
+
+  .logo-text {
+    font-family: 'DM Sans', sans-serif;
+    font-size: 13px;
+    font-weight: 600;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    color: var(--dusk-l);
+  }
+
+  .site-name {
+    font-family: 'Playfair Display', serif;
+    font-size: clamp(32px, 6vw, 52px);
+    line-height: 1.08;
+    letter-spacing: -0.5px;
+    color: var(--text);
+    margin-bottom: 14px;
+  }
+
+  .site-name em {
+    font-style: italic;
+    color: var(--red);
+  }
+
+  .site-desc {
+    font-size: 14px;
+    color: var(--muted);
+    font-weight: 300;
+    line-height: 1.65;
+    max-width: 400px;
+  }
+
+  /* red accent line */
+  .accent-line {
+    width: 36px;
+    height: 3px;
+    background: var(--red);
+    border-radius: 2px;
+    margin: 16px 0 0;
+  }
+
+  /* ── GRID ── */
+  .grid {
+    max-width: 660px;
+    margin: 0 auto;
+    display: grid;
+    gap: 10px;
+  }
+
+  /* ── SECTION LABEL ── */
+  .section-label {
+    font-size: 10px;
+    font-weight: 600;
+    letter-spacing: 2px;
+    color: var(--muted);
+    text-transform: uppercase;
+    margin: 28px 0 8px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .section-label::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: var(--border);
+  }
+  .section-label:first-child { margin-top: 0; }
+
+  /* ── CARD ── */
+  .card {
+    display: flex;
+    align-items: center;
+    gap: 18px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 18px 22px;
+    text-decoration: none;
+    color: inherit;
+    transition: border-color 0.2s, background 0.2s, transform 0.15s, box-shadow 0.2s;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .card::before {
+    content: '';
+    position: absolute;
+    left: 0; top: 0; bottom: 0;
+    width: 3px;
+    background: transparent;
+    transition: background 0.2s;
+    border-radius: 14px 0 0 14px;
+  }
+
+  .card:hover {
+    border-color: rgba(66,87,144,0.4);
+    background: var(--surface2);
+    transform: translateY(-2px);
+    box-shadow: 0 8px 24px rgba(0,0,0,0.25);
+  }
+
+  .card:hover::before { background: var(--dusk); }
+
+  /* priority cards get red accent */
+  .card.priority:hover::before { background: var(--red); }
+  .card.priority:hover { border-color: rgba(255,39,49,0.3); }
+
+  .card-icon {
+    width: 42px;
+    height: 42px;
+    border-radius: 10px;
+    background: rgba(66,87,144,0.12);
+    border: 1px solid rgba(66,87,144,0.2);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 18px;
+    flex-shrink: 0;
+    transition: background 0.2s, border-color 0.2s;
+  }
+
+  .card.priority .card-icon {
+    background: rgba(255,39,49,0.08);
+    border-color: rgba(255,39,49,0.18);
+  }
+
+  .card:hover .card-icon {
+    background: rgba(66,87,144,0.2);
+    border-color: rgba(66,87,144,0.35);
+  }
+
+  .card.priority:hover .card-icon {
+    background: rgba(255,39,49,0.13);
+    border-color: rgba(255,39,49,0.3);
+  }
+
+  .card-body { flex: 1; min-width: 0; }
+
+  .card-title {
+    font-size: 14.5px;
+    font-weight: 500;
+    color: var(--text);
+    margin-bottom: 3px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .card-desc {
+    font-size: 12.5px;
+    color: var(--muted);
+    font-weight: 300;
+    line-height: 1.4;
+  }
+
+  .card-meta {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin-top: 5px;
+  }
+
+  .badge {
+    font-size: 9px;
+    font-weight: 600;
+    letter-spacing: 0.8px;
+    text-transform: uppercase;
+    padding: 2px 7px;
+    border-radius: 6px;
+  }
+  .badge-blue { background: rgba(66,87,144,0.18); color: var(--dusk-l); }
+  .badge-red  { background: rgba(255,39,49,0.12); color: #ff6b6f; }
+  .badge-grn  { background: rgba(46,125,78,0.15); color: #5cb87a; }
+  .badge-gold { background: rgba(201,169,60,0.12); color: #c9a83c; }
+
+  .card-arrow {
+    color: var(--muted);
+    font-size: 16px;
+    flex-shrink: 0;
+    transition: color 0.2s, transform 0.2s;
+  }
+  .card:hover .card-arrow { color: var(--dusk-l); transform: translateX(3px); }
+  .card.priority:hover .card-arrow { color: #ff6b6f; }
+
+  /* ── EMPTY CARD (placeholder) ── */
+  .card.empty {
+    border-style: dashed;
+    border-color: rgba(255,255,255,0.05);
+    opacity: 0.45;
+    cursor: default;
+    pointer-events: none;
+  }
+  .card.empty:hover { transform: none; box-shadow: none; }
+
+  /* ── FOOTER ── */
+  footer {
+    max-width: 660px;
+    margin: 52px auto 0;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    flex-wrap: wrap;
+  }
+  .footer-brand {
+    font-family: 'Playfair Display', serif;
+    font-size: 12px;
+    font-style: italic;
+    color: #2e3550;
+  }
+  .footer-contact {
+    font-size: 11px;
+    color: #2e3550;
+  }
+  .footer-contact a {
+    color: var(--dusk);
+    text-decoration: none;
+  }
+  .footer-contact a:hover { color: var(--dusk-l); }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo-row">
+    <div class="logo-mark">▲</div>
+    <div class="logo-text">Finsherpa</div>
+  </div>
+  <h1 class="site-name">Intelligence <em>Hub</em></h1>
+  <p class="site-desc">A private workspace for GCC outreach intelligence, org charts, scorecards, and campaign assets. Click any card to open.</p>
+  <div class="accent-line"></div>
+</header>
+
+<main class="grid">
+
+  <!-- SECTION: GCC ORG CHARTS -->
+  <p class="section-label">GCC Org Charts</p>
+
+  <a class="card priority" href="Ashley_GCC_OrgChart_FinSherpa.html">
+    <div class="card-icon">🏢</div>
+    <div class="card-body">
+      <div class="card-title">Ashley Global Capability Center</div>
+      <div class="card-desc">11 leaders mapped · Priority scoring · Tap cards for full profiles & opening hooks</div>
+      <div class="card-meta">
+        <span class="badge badge-red">3 Priority 1</span>
+        <span class="badge badge-blue">4 Priority 2</span>
+        <span class="badge badge-grn">Chennai</span>
+      </div>
+    </div>
+    <span class="card-arrow">→</span>
+  </a>
+
+  <a class="card empty" href="#">
+    <div class="card-icon">🏢</div>
+    <div class="card-body">
+      <div class="card-title">Next GCC — Coming Soon</div>
+      <div class="card-desc">Add your next org chart here</div>
+    </div>
+    <span class="card-arrow">→</span>
+  </a>
+
+  <!-- SECTION: OUTREACH DECKS -->
+  <p class="section-label">Outreach Decks</p>
+
+  <a class="card priority" href="FinSherpa_Imran_Siddique.pptx">
+    <div class="card-icon">📊</div>
+    <div class="card-body">
+      <div class="card-title">Mohammed Imran Siddique — Ashley GCC</div>
+      <div class="card-desc">Director, Finance & Accounting · Cohort 1: Established Commander</div>
+      <div class="card-meta">
+        <span class="badge badge-red">Priority 1</span>
+        <span class="badge badge-blue">ESOP angle</span>
+        <span class="badge badge-gold">5 slides</span>
+      </div>
+    </div>
+    <span class="card-arrow">→</span>
+  </a>
+
+  <a class="card priority" href="FinSherpa_Ravi_Nalwaya.pptx">
+    <div class="card-icon">📊</div>
+    <div class="card-body">
+      <div class="card-title">Ravi Nalwaya — Staples India</div>
+      <div class="card-desc">MD & Head · Cohort 3: Pre-Retiree / Transition Seeker</div>
+      <div class="card-meta">
+        <span class="badge badge-red">Priority 1</span>
+        <span class="badge badge-blue">Transition angle</span>
+        <span class="badge badge-gold">5 slides</span>
+      </div>
+    </div>
+    <span class="card-arrow">→</span>
+  </a>
+
+  <!-- SECTION: ICP & STRATEGY -->
+  <p class="section-label">ICP & Strategy</p>
+
+  <a class="card empty" href="#">
+    <div class="card-icon">🎯</div>
+    <div class="card-body">
+      <div class="card-title">GCC Leader ICP — 5 Cohorts</div>
+      <div class="card-desc">Scorecard & LinkedIn filter criteria · Add HTML file here</div>
+    </div>
+    <span class="card-arrow">→</span>
+  </a>
+
+  <a class="card empty" href="#">
+    <div class="card-icon">📋</div>
+    <div class="card-body">
+      <div class="card-title">Prospect Scorecard</div>
+      <div class="card-desc">Priority scoring sheet · Add HTML file here</div>
+    </div>
+    <span class="card-arrow">→</span>
+  </a>
+
+  <!-- SECTION: REFERENCE -->
+  <p class="section-label">Reference</p>
+
+  <a class="card" href="FinSherpa_Intelligence_Brief.docx">
+    <div class="card-icon">📄</div>
+    <div class="card-body">
+      <div class="card-title">FinSherpa Intelligence Brief</div>
+      <div class="card-desc">Company profile · Team backgrounds · Conversation starters · March 2026</div>
+      <div class="card-meta">
+        <span class="badge badge-blue">Context doc</span>
+      </div>
+    </div>
+    <span class="card-arrow">→</span>
+  </a>
+
+</main>
+
+<footer>
+  <span class="footer-brand">FinSherpa Investments Private Limited — Helping You Reach Your Financial Peak</span>
+  <span class="footer-contact">
+    <a href="https://www.finsherpa.com">finsherpa.com</a> &nbsp;·&nbsp;
+    <a href="mailto:info@finsherpa.com">info@finsherpa.com</a> &nbsp;·&nbsp;
+    +91-9159269900
+  </span>
+</footer>
+
+</body>
+</html>

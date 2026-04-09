@@ -1,0 +1,882 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Wealth Readiness Scorecard — Finsherpa</title>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;0,700;1,400;1,500&family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root {
+  --navy:    #0d2137;
+  --navy2:   #1a3a55;
+  --gold:    #b07d1a;
+  --gold2:   #c8922a;
+  --gold3:   #e8b84b;
+  --cream:   #faf7f2;
+  --cream2:  #f0ebe0;
+  --cream3:  #e8e0d0;
+  --white:   #ffffff;
+  --ink:     #1a2a3a;
+  --ink2:    #344d62;
+  --muted:   #7a8fa6;
+  --border:  rgba(176,125,26,0.25);
+  --card:    #ffffff;
+  --radius:  12px;
+}
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html { scroll-behavior: smooth; }
+
+body {
+  font-family: 'DM Sans', sans-serif;
+  background: var(--cream);
+  color: var(--ink);
+  min-height: 100vh;
+  overflow-x: hidden;
+}
+
+/* ── TOP BAR ── */
+.topbar {
+  background: var(--navy);
+  height: 4px;
+  width: 100%;
+}
+
+/* ── WRAPPER ── */
+.wrap { max-width: 780px; margin: 0 auto; padding: 0 24px 80px; }
+
+/* ── HEADER ── */
+.header {
+  padding: 44px 0 36px;
+  display: flex; flex-direction: column; align-items: center; text-align: center;
+}
+
+.logo-wordmark {
+  display: flex; align-items: center; gap: 10px; margin-bottom: 32px;
+}
+.logo-mark {
+  width: 34px; height: 34px;
+  background: var(--gold2);
+  clip-path: polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%);
+  flex-shrink: 0;
+}
+.logo-text {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 22px; font-weight: 600; letter-spacing: 1px;
+  color: var(--navy);
+}
+.logo-text span { color: var(--gold2); }
+
+.eyebrow {
+  font-size: 10px; font-weight: 600; letter-spacing: 3px; text-transform: uppercase;
+  color: var(--gold2); margin-bottom: 14px;
+  background: rgba(176,125,26,0.1);
+  padding: 5px 14px; border-radius: 100px;
+  border: 1px solid var(--border);
+}
+
+.header h1 {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: clamp(30px, 5.5vw, 48px);
+  font-weight: 600; line-height: 1.15;
+  color: var(--navy); margin-bottom: 16px;
+}
+.header h1 em { font-style: italic; color: var(--gold2); }
+
+.header-sub {
+  font-size: 15px; color: var(--ink2); line-height: 1.65;
+  max-width: 520px; margin-bottom: 28px;
+}
+
+.meta-strip {
+  display: flex; gap: 10px; flex-wrap: wrap; justify-content: center;
+}
+.meta-pill {
+  display: flex; align-items: center; gap: 6px;
+  font-size: 11px; color: var(--ink2);
+  font-family: 'DM Mono', monospace;
+  padding: 5px 13px; border-radius: 100px;
+  background: var(--cream2);
+  border: 1px solid var(--cream3);
+}
+.meta-pill .dot { width: 5px; height: 5px; border-radius: 50%; background: var(--gold2); flex-shrink: 0; }
+
+/* ── DIVIDER ── */
+.divider {
+  height: 1px;
+  background: var(--cream3);
+  margin: 28px 0;
+}
+
+/* ── SECTION CARD (wraps quiz + result) ── */
+.section-card {
+  background: var(--white);
+  border: 1px solid var(--cream3);
+  border-radius: 16px;
+  padding: 32px;
+  box-shadow: 0 2px 16px rgba(13,33,55,0.06);
+}
+
+/* ── PROGRESS ── */
+.progress-wrap { margin-bottom: 28px; }
+.progress-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
+.progress-label { font-size: 11px; font-weight: 600; color: var(--muted); letter-spacing: 1px; text-transform: uppercase; }
+.progress-count { font-family: 'DM Mono', monospace; font-size: 12px; color: var(--gold2); font-weight: 500; }
+.progress-track { height: 4px; background: var(--cream2); border-radius: 2px; overflow: hidden; }
+.progress-fill {
+  height: 100%; background: linear-gradient(90deg, var(--gold), var(--gold3));
+  border-radius: 2px; transition: width 0.5s cubic-bezier(0.4,0,0.2,1); width: 0%;
+}
+
+/* ── DIM TABS ── */
+.dim-tabs { display: flex; gap: 7px; margin-bottom: 24px; flex-wrap: wrap; }
+.dim-tab {
+  font-size: 10px; font-weight: 600; letter-spacing: 1px; text-transform: uppercase;
+  padding: 5px 12px; border-radius: 100px;
+  border: 1px solid var(--cream3);
+  background: var(--cream);
+  color: var(--muted); cursor: default; transition: all 0.25s;
+}
+.dim-tab.done { border-color: var(--border); color: var(--gold2); background: rgba(176,125,26,0.07); }
+.dim-tab.active { background: var(--navy); border-color: var(--navy); color: #fff; }
+
+/* ── SECTION LABEL ── */
+.section-label {
+  display: flex; align-items: center; gap: 10px; margin-bottom: 18px;
+}
+.section-num {
+  width: 26px; height: 26px; border-radius: 50%;
+  background: var(--navy); color: #fff;
+  font-size: 11px; font-weight: 700;
+  display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+}
+.section-title-text {
+  font-size: 11px; font-weight: 700; letter-spacing: 2px;
+  text-transform: uppercase; color: var(--navy);
+}
+
+/* ── QUESTION CARD ── */
+.q-card { display: none; animation: fadeSlideIn 0.3s cubic-bezier(0.4,0,0.2,1) both; }
+.q-card.active { display: block; }
+
+@keyframes fadeSlideIn {
+  from { opacity: 0; transform: translateY(12px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+.q-text {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: clamp(18px, 3vw, 22px);
+  font-weight: 500; line-height: 1.45;
+  color: var(--navy); margin-bottom: 22px;
+}
+.q-text em { font-style: italic; color: var(--gold2); }
+
+/* ── OPTIONS ── */
+.options { display: flex; flex-direction: column; gap: 9px; }
+
+.opt {
+  display: flex; align-items: flex-start; gap: 13px;
+  padding: 13px 16px; border-radius: 9px;
+  border: 1.5px solid var(--cream3);
+  background: var(--cream);
+  cursor: pointer; transition: all 0.18s;
+  text-align: left; width: 100%;
+  color: var(--ink); font-family: 'DM Sans', sans-serif;
+}
+.opt:hover {
+  border-color: var(--border);
+  background: rgba(176,125,26,0.05);
+  transform: translateX(2px);
+}
+.opt.selected {
+  border-color: var(--gold2);
+  background: rgba(176,125,26,0.08);
+}
+.opt.selected .opt-marker {
+  background: var(--gold2); border-color: var(--gold2); color: #fff;
+}
+
+.opt-marker {
+  width: 22px; height: 22px; border-radius: 50%;
+  border: 1.5px solid var(--cream3);
+  background: var(--white);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 10px; font-weight: 700; flex-shrink: 0; margin-top: 1px;
+  transition: all 0.18s;
+  font-family: 'DM Mono', monospace;
+  color: var(--muted);
+}
+
+.opt-label {
+  font-size: 14px; line-height: 1.5; color: var(--ink2);
+}
+.opt.selected .opt-label { color: var(--ink); font-weight: 500; }
+
+/* ── NAV BUTTONS ── */
+.nav-row {
+  display: flex; gap: 12px; margin-top: 24px;
+  justify-content: space-between; align-items: center;
+}
+.btn-back {
+  background: transparent; border: 1.5px solid var(--cream3);
+  color: var(--muted); font-size: 13px; font-family: 'DM Sans', sans-serif;
+  padding: 10px 20px; border-radius: 8px; cursor: pointer; transition: all 0.18s;
+}
+.btn-back:hover { border-color: var(--navy); color: var(--navy); }
+.btn-back:disabled { opacity: 0.35; cursor: not-allowed; }
+
+.btn-next {
+  background: var(--navy); color: #fff;
+  border: none; font-size: 13px; font-weight: 600;
+  font-family: 'DM Sans', sans-serif;
+  padding: 11px 26px; border-radius: 8px; cursor: pointer;
+  transition: all 0.18s; letter-spacing: 0.3px;
+  display: flex; align-items: center; gap: 7px;
+  opacity: 0.35; pointer-events: none;
+}
+.btn-next.ready { opacity: 1; pointer-events: all; }
+.btn-next.ready:hover { background: var(--navy2); transform: translateY(-1px); box-shadow: 0 4px 14px rgba(13,33,55,0.2); }
+.btn-next .arrow { font-size: 15px; transition: transform 0.18s; }
+.btn-next.ready:hover .arrow { transform: translateX(3px); }
+
+/* ── RESULT SCREEN ── */
+#result-screen { display: none; }
+#result-screen.visible { display: block; animation: fadeSlideIn 0.45s ease both; }
+
+.result-header { text-align: center; padding: 4px 0 28px; }
+.result-eyebrow {
+  font-size: 10px; letter-spacing: 3px; text-transform: uppercase;
+  color: var(--gold2); margin-bottom: 12px;
+  display: inline-block;
+  background: rgba(176,125,26,0.1);
+  padding: 4px 12px; border-radius: 100px; border: 1px solid var(--border);
+}
+.result-name {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: clamp(26px, 4.5vw, 40px);
+  font-weight: 600; line-height: 1.2; margin-bottom: 10px; color: var(--navy);
+}
+.result-tagline {
+  font-size: 14px; color: var(--ink2); line-height: 1.65;
+  max-width: 500px; margin: 0 auto;
+}
+
+/* ── SCORE DIAL ── */
+.dial-wrap { display: flex; justify-content: center; margin: 0 auto 36px; }
+.dial-svg { width: 190px; height: 190px; }
+
+/* ── DIMENSION SCORES ── */
+.dim-scores { display: flex; flex-direction: column; gap: 11px; margin-bottom: 28px; }
+.dim-row {
+  display: flex; align-items: center; gap: 14px;
+  padding: 14px 18px;
+  background: var(--cream);
+  border: 1px solid var(--cream3);
+  border-radius: var(--radius);
+}
+.dim-icon { font-size: 18px; width: 28px; flex-shrink: 0; text-align: center; }
+.dim-info { flex: 1; min-width: 0; }
+.dim-name { font-size: 12px; font-weight: 600; color: var(--navy); margin-bottom: 6px; }
+.dim-bar-track { height: 5px; background: var(--cream3); border-radius: 3px; overflow: hidden; }
+.dim-bar-fill { height: 100%; border-radius: 3px; transition: width 1s cubic-bezier(0.4,0,0.2,1) 0.3s; }
+.dim-score-label {
+  font-family: 'DM Mono', monospace; font-size: 13px;
+  color: var(--gold2); font-weight: 500; flex-shrink: 0; min-width: 36px; text-align: right;
+}
+
+/* ── TIER CARD ── */
+.tier-card {
+  border-radius: var(--radius);
+  padding: 26px 24px;
+  margin-bottom: 20px;
+  border: 1px solid;
+  position: relative; overflow: hidden;
+}
+.tier-card::before {
+  content: ''; position: absolute; top: 0; left: 0; right: 0; height: 3px;
+}
+.tier-high   { border-color: rgba(46,125,78,0.3); background: rgba(46,125,78,0.04); }
+.tier-high::before   { background: linear-gradient(90deg, #2e7d4e, #52c47a); }
+.tier-mid    { border-color: rgba(176,125,26,0.3); background: rgba(176,125,26,0.04); }
+.tier-mid::before    { background: linear-gradient(90deg, var(--gold), var(--gold3)); }
+.tier-low    { border-color: rgba(200,70,50,0.3); background: rgba(200,70,50,0.04); }
+.tier-low::before    { background: linear-gradient(90deg, #c84632, #ff7055); }
+
+.tier-badge {
+  display: inline-block; font-size: 9px; font-weight: 700; letter-spacing: 1.5px;
+  text-transform: uppercase; padding: 3px 10px; border-radius: 100px;
+  margin-bottom: 10px; color: #fff;
+}
+.tier-high .tier-badge { background: #2e7d4e; }
+.tier-mid  .tier-badge { background: var(--gold2); }
+.tier-low  .tier-badge { background: #c84632; }
+
+.tier-title {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 22px; font-weight: 600; margin-bottom: 10px; color: var(--navy);
+}
+.tier-body { font-size: 14px; color: var(--ink2); line-height: 1.7; }
+.tier-body strong { color: var(--navy); font-weight: 600; }
+
+/* ── INSIGHT CARDS ── */
+.insights-label {
+  font-size: 10px; font-weight: 700; letter-spacing: 2px; text-transform: uppercase;
+  color: var(--muted); margin-bottom: 12px;
+}
+.insights { display: flex; flex-direction: column; gap: 11px; margin-bottom: 28px; }
+.insight-card {
+  display: flex; gap: 14px; align-items: flex-start;
+  padding: 16px 18px;
+  background: var(--cream);
+  border: 1px solid var(--cream3);
+  border-radius: var(--radius);
+  border-left: 3px solid var(--gold2);
+}
+.insight-icon { font-size: 17px; flex-shrink: 0; margin-top: 1px; }
+.insight-head { font-size: 12px; font-weight: 700; color: var(--navy); margin-bottom: 5px; }
+.insight-body { font-size: 13px; color: var(--ink2); line-height: 1.6; }
+
+/* ── CTA BOX ── */
+.cta-box {
+  background: var(--navy);
+  border-radius: var(--radius);
+  padding: 30px 26px; text-align: center; margin-bottom: 20px;
+}
+.cta-title {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 24px; font-weight: 600; margin-bottom: 10px; color: #fff;
+}
+.cta-sub { font-size: 13.5px; color: rgba(255,255,255,0.6); line-height: 1.65; margin-bottom: 22px; max-width: 440px; margin-left: auto; margin-right: auto; }
+.cta-btn {
+  display: inline-flex; align-items: center; gap: 7px;
+  background: var(--gold2); color: var(--navy);
+  border: none; font-size: 14px; font-weight: 700;
+  font-family: 'DM Sans', sans-serif;
+  padding: 13px 28px; border-radius: 8px; cursor: pointer;
+  text-decoration: none; transition: all 0.2s; letter-spacing: 0.3px;
+}
+.cta-btn:hover { background: var(--gold3); transform: translateY(-2px); box-shadow: 0 8px 24px rgba(200,146,42,0.3); }
+
+.privacy-note {
+  text-align: center; font-size: 11px; color: var(--muted);
+  font-family: 'DM Mono', monospace;
+  padding: 16px 0 4px;
+  border-top: 1px solid var(--cream3);
+  margin-top: 16px;
+  line-height: 1.6;
+}
+
+.restart-btn {
+  display: block; text-align: center; margin: 14px auto 0;
+  background: transparent; border: none; color: var(--muted);
+  font-size: 12px; font-family: 'DM Sans', sans-serif; cursor: pointer;
+  text-decoration: underline; text-underline-offset: 3px;
+}
+.restart-btn:hover { color: var(--navy); }
+
+/* ── FOOTER ── */
+.footer {
+  text-align: center; padding-top: 20px;
+  font-size: 11px; color: var(--muted);
+  line-height: 1.8;
+}
+
+/* ── RESPONSIVE ── */
+@media (max-width: 520px) {
+  .wrap { padding: 0 14px 60px; }
+  .header { padding: 28px 0 24px; }
+  .section-card { padding: 20px 16px; }
+  .opt { padding: 11px 13px; }
+  .meta-strip { gap: 7px; }
+  .dim-tabs { gap: 5px; }
+  .dim-tab { font-size: 9px; padding: 4px 10px; }
+}
+</style>
+</head>
+<body>
+
+<div class="topbar"></div>
+
+<div class="wrap">
+
+  <!-- HEADER -->
+  <div class="header">
+    <div class="logo-wordmark">
+      <div class="logo-mark"></div>
+      <div class="logo-text">Fin<span>Sherpa</span></div>
+    </div>
+    <div class="eyebrow">For Senior GCC Professionals</div>
+    <h1>Your <em>Wealth Readiness</em><br>Scorecard</h1>
+    <p class="header-sub">You have a plan. This scorecard tests whether it's good enough — for someone at your level, with your complexity, and the career moves still ahead of you.</p>
+    <div class="meta-strip">
+      <div class="meta-pill"><div class="dot"></div>5 min to complete</div>
+      <div class="meta-pill"><div class="dot"></div>No login required</div>
+      <div class="meta-pill"><div class="dot"></div>Zero data collected</div>
+    </div>
+  </div>
+
+  <div class="divider"></div>
+
+  <!-- QUIZ SCREEN -->
+  <div id="quiz-screen">
+    <div class="section-card">
+
+      <!-- Progress -->
+      <div class="progress-wrap">
+        <div class="progress-header">
+          <span class="progress-label">Progress</span>
+          <span class="progress-count" id="prog-count">Question 1 of 12</span>
+        </div>
+        <div class="progress-track"><div class="progress-fill" id="prog-fill"></div></div>
+      </div>
+
+      <!-- Dimension tabs -->
+      <div class="dim-tabs" id="dim-tabs">
+        <div class="dim-tab active" data-dim="0">Retirement</div>
+        <div class="dim-tab" data-dim="1">Tax & ESOPs</div>
+        <div class="dim-tab" data-dim="2">Protection</div>
+        <div class="dim-tab" data-dim="3">Investments</div>
+        <div class="dim-tab" data-dim="4">Wealth Velocity</div>
+      </div>
+
+      <!-- Questions -->
+      <div id="questions-wrap"></div>
+
+      <!-- Nav -->
+      <div class="nav-row">
+        <button class="btn-back" id="btn-back" onclick="prevQ()" disabled>← Back</button>
+        <button class="btn-next" id="btn-next" onclick="nextQ()">
+          <span id="next-label">Next</span>
+          <span class="arrow">→</span>
+        </button>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- RESULT SCREEN -->
+  <div id="result-screen">
+    <div class="section-card">
+
+      <div class="result-header">
+        <div class="result-eyebrow">Your Results</div>
+        <div class="result-name" id="result-title"></div>
+        <p class="result-tagline" id="result-tagline"></p>
+      </div>
+
+      <!-- Dial -->
+      <div class="dial-wrap">
+        <svg class="dial-svg" viewBox="0 0 200 200" id="score-dial">
+          <defs>
+            <linearGradient id="dialGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+              <stop offset="0%" style="stop-color:#b07d1a"/>
+              <stop offset="100%" style="stop-color:#e8b84b"/>
+            </linearGradient>
+          </defs>
+          <!-- Track -->
+          <circle cx="100" cy="100" r="80" fill="none" stroke="#f0ebe0" stroke-width="13"
+            stroke-dasharray="440" stroke-dashoffset="110" stroke-linecap="round"
+            transform="rotate(126 100 100)"/>
+          <!-- Fill -->
+          <circle cx="100" cy="100" r="80" fill="none" stroke="url(#dialGrad)" stroke-width="13"
+            stroke-linecap="round" id="dial-fill"
+            stroke-dasharray="440" stroke-dashoffset="440"
+            transform="rotate(126 100 100)"
+            style="transition: stroke-dashoffset 1.4s cubic-bezier(0.4,0,0.2,1) 0.2s"/>
+          <!-- Score -->
+          <text x="100" y="90" text-anchor="middle" fill="#0d2137"
+            font-family="Cormorant Garamond, serif" font-size="46" font-weight="600"
+            id="dial-score">0</text>
+          <text x="100" y="112" text-anchor="middle" fill="#7a8fa6"
+            font-family="DM Sans, sans-serif" font-size="11">/100</text>
+          <text x="100" y="134" text-anchor="middle" fill="#b07d1a"
+            font-family="DM Sans, sans-serif" font-size="10" font-weight="700"
+            letter-spacing="2" id="dial-tier-label">SCORE</text>
+        </svg>
+      </div>
+
+      <!-- Dimension bars -->
+      <div class="dim-scores" id="dim-scores"></div>
+
+      <!-- Tier card -->
+      <div id="tier-card"></div>
+
+      <!-- Insights -->
+      <p class="insights-label">Where to focus next</p>
+      <div class="insights" id="insights"></div>
+
+      <!-- CTA -->
+      <div class="cta-box">
+        <div class="cta-title">Let's look at the specifics.</div>
+        <p class="cta-sub">A 30-minute conversation with a Finsherpa advisor goes deeper than this scorecard — into the actual numbers, the specific gaps, and what a restructured plan looks like for your situation.</p>
+        <a class="cta-btn" href="https://www.finsherpa.com/contact-us" target="_blank">
+          Book a Conversation ↗
+        </a>
+      </div>
+
+      <div class="privacy-note">
+        🔒 This scorecard runs entirely in your browser.<br>
+        No answers, scores, or personal information are collected or stored anywhere.
+      </div>
+
+      <button class="restart-btn" onclick="restart()">↺ Retake the scorecard</button>
+
+    </div>
+  </div>
+
+  <div class="divider"></div>
+
+  <div class="footer">
+    © 2025 Finsherpa Investments Private Limited · Chennai<br>
+    AMFI Registered Mutual Fund Distributor · This tool is for self-assessment purposes only and does not constitute financial advice.
+  </div>
+
+</div>
+
+<script>
+// ── DATA ────────────────────────────────────────────────────────────────────
+
+const DIMS = [
+  { name: "Retirement Readiness",  icon: "🏔️", color: "#b07d1a" },
+  { name: "Tax & ESOP Efficiency", icon: "💹", color: "#c8922a" },
+  { name: "Protection & Estate",   icon: "🛡️", color: "#2e7d4e" },
+  { name: "Investment Structure",  icon: "📊", color: "#425790" },
+  { name: "Wealth Velocity",       icon: "⚡", color: "#c84632" },
+];
+
+const QS = [
+
+  // ── DIM 0: RETIREMENT ──
+  {
+    dim: 0, w: 3,
+    text: "You likely have a retirement number in mind. But has it been <em>stress-tested against 7% inflation, 30-year longevity post-retirement, and healthcare costs that double every 8 years</em> — or is it a figure that feels right intuitively?",
+    opts: [
+      { l: "Yes — modelled precisely, reviewed in the last 12 months, with a named advisor.", s: 3 },
+      { l: "I have a number and it accounts for inflation, but I haven't stress-tested it rigorously.", s: 2 },
+      { l: "I have a rough figure but it's more intuitive than calculated.", s: 1 },
+      { l: "I invest consistently but haven't built a specific retirement model.", s: 0 },
+    ]
+  },
+  {
+    dim: 0, w: 2,
+    text: "Every employer transition is a wealth event — EPF transfer, gratuity, unvested equity, group insurance lapse. When you last changed roles, <em>how much of that transition value was actively managed vs. left to default?</em>",
+    opts: [
+      { l: "Fully managed — EPF transferred, gratuity reinvested, equity timed, cover replaced.", s: 3 },
+      { l: "Mostly managed — handled the big items, may have left some value on the table.", s: 2 },
+      { l: "Handled the essentials (EPF transfer) but didn't actively optimise the rest.", s: 1 },
+      { l: "Didn't think about it as a structured wealth event at the time.", s: 0 },
+    ]
+  },
+  {
+    dim: 0, w: 2,
+    text: "Your savings rate — the percentage of income converted to investible assets — has your <em>rate kept pace with your income growth</em>, or has it stayed roughly constant as income scaled?",
+    opts: [
+      { l: "My savings rate has grown as income grew — increments are mostly invested.", s: 3 },
+      { l: "Rate is roughly constant — absolute savings have grown but % hasn't.", s: 2 },
+      { l: "Lifestyle has absorbed most of the income growth over the last few years.", s: 1 },
+      { l: "I invest what's left after expenses — no target rate.", s: 0 },
+    ]
+  },
+
+  // ── DIM 1: TAX & ESOP ──
+  {
+    dim: 1, w: 3,
+    text: "If you've held ESOPs or RSUs from a listed employer — Indian or US-listed — were your <em>exercise and sale events timed across financial years</em> to minimise aggregate tax, or did you exercise as grants vested?",
+    opts: [
+      { l: "Timed deliberately — structured across FYs with a CA, tax impact modelled before exercise.", s: 3 },
+      { l: "Partially — was aware of timing but didn't model it precisely.", s: 2 },
+      { l: "Exercised when they vested and paid the tax due — no advance planning.", s: 1 },
+      { l: "No ESOPs currently, or haven't engaged with them strategically.", s: 0 },
+    ]
+  },
+  {
+    dim: 1, w: 3,
+    text: "At ₹50L+ income, Section 80C covers less than 3% of your earnings. Are you actively working <em>beyond 80C</em> — NPS 80CCD(1B), capital loss harvesting, LTCG optimisation, or structuring investments across family members?",
+    opts: [
+      { l: "Yes — I use at least 3–4 levers beyond 80C, reviewed annually with a CA.", s: 3 },
+      { l: "I use NPS and 1–2 others, but it's not a comprehensive annual review.", s: 2 },
+      { l: "I max 80C and NPS — that's the extent of active tax planning.", s: 1 },
+      { l: "My CA handles it — I haven't been involved in structuring decisions.", s: 0 },
+    ]
+  },
+  {
+    dim: 1, w: 2,
+    text: "The wealth you've built over 15–20 years sits across multiple instruments. Do you have a <em>plan to transfer it across your family tax-efficiently</em> over the next decade — or will it be structured at the time it's needed?",
+    opts: [
+      { l: "Yes — structured gifting, HUF, joint holdings, or trust framework already in place.", s: 3 },
+      { l: "Thought about it but not yet formalised into a plan.", s: 2 },
+      { l: "It's on the list — I know it matters but haven't acted.", s: 1 },
+      { l: "Haven't considered this dimension of planning yet.", s: 0 },
+    ]
+  },
+
+  // ── DIM 2: PROTECTION & ESTATE ──
+  {
+    dim: 2, w: 3,
+    text: "Your term insurance was likely bought when your income — and your family's dependence on it — was lower. Does your <em>current cover reflect your actual salary, liabilities, and lifestyle today</em>, or is it based on a figure set years ago?",
+    opts: [
+      { l: "Reviewed and updated within the last 2 years — adequacy confirmed.", s: 3 },
+      { l: "I have significant cover but haven't reviewed sufficiency recently.", s: 2 },
+      { l: "Cover exists but it's employer group insurance, not personally held pure term.", s: 1 },
+      { l: "My primary life insurance is investment-linked — ULIP or endowment.", s: 0 },
+    ]
+  },
+  {
+    dim: 2, w: 2,
+    text: "Estate planning beyond a Will includes <em>nominee alignment, trust structures for minor children, and a clear plan for equity and business assets</em>. Where does yours stand?",
+    opts: [
+      { l: "Comprehensive — registered Will, updated nominees, trust or clear succession plan.", s: 3 },
+      { l: "Will exists and nominees are set, but equity/business succession isn't formalised.", s: 2 },
+      { l: "Will is drafted but not registered, or nominees haven't been reviewed recently.", s: 1 },
+      { l: "Nothing formal in place — it's been deferred.", s: 0 },
+    ]
+  },
+
+  // ── DIM 3: INVESTMENT STRUCTURE ──
+  {
+    dim: 3, w: 3,
+    text: "Strip out your primary home and PF. Of your remaining <em>investible wealth, how concentrated is it</em> — spread deliberately across equity, debt, and alternatives, or clustered in 1–2 categories that grew organically over time?",
+    opts: [
+      { l: "Deliberately diversified with a written allocation framework and annual rebalancing.", s: 3 },
+      { l: "Reasonably spread but allocation evolved over time, not designed from a plan.", s: 2 },
+      { l: "Heavily weighted to 1–2 categories — real estate, FDs, or direct equity.", s: 1 },
+      { l: "I haven't separated and analysed investible wealth distinct from my home/PF.", s: 0 },
+    ]
+  },
+  {
+    dim: 3, w: 2,
+    text: "Your portfolio's asset allocation — does it have a <em>deliberate glide path toward your retirement date</em>, shifting from growth to preservation as you approach it, or has allocation stayed roughly static?",
+    opts: [
+      { l: "Yes — glide path is defined, and allocation shifts are scheduled.", s: 3 },
+      { l: "I rebalance occasionally but there's no formal glide path.", s: 2 },
+      { l: "Allocation has been broadly the same for several years.", s: 1 },
+      { l: "I haven't thought about allocation in terms of a retirement timeline.", s: 0 },
+    ]
+  },
+
+  // ── DIM 4: WEALTH VELOCITY ──
+  {
+    dim: 4, w: 3,
+    text: "In the last 3 years of strong earnings, what percentage of your <em>incremental income</em> — the raise above your prior salary — was converted into investible assets versus absorbed by lifestyle, EMIs, or larger expenses?",
+    opts: [
+      { l: "Over 70% of increments invested — lifestyle growth has been deliberately contained.", s: 3 },
+      { l: "Roughly half — a mix of lifestyle upgrade and savings.", s: 2 },
+      { l: "Most of the increment has gone to lifestyle, EMIs, or expenses.", s: 1 },
+      { l: "I haven't tracked this — I don't know what % of increments I've saved.", s: 0 },
+    ]
+  },
+  {
+    dim: 4, w: 2,
+    text: "GCC roles can restructure, compress, or disappear quickly. If your role ended tomorrow, how many months of your <em>current lifestyle could you sustain from purely liquid assets</em> — excluding real estate and EPF?",
+    opts: [
+      { l: "18+ months — I hold a deliberate liquidity buffer separate from long-term investments.", s: 3 },
+      { l: "9–18 months — enough runway to be selective about what comes next.", s: 2 },
+      { l: "3–6 months — I'd need to move quickly or draw from long-term investments.", s: 1 },
+      { l: "Less than 3 months of liquid runway.", s: 0 },
+    ]
+  },
+];
+
+// ── STATE ────────────────────────────────────────────────────────────────────
+let current = 0;
+let answers = new Array(QS.length).fill(null);
+
+// ── BUILD QUESTIONS ──────────────────────────────────────────────────────────
+function buildQuestions() {
+  const wrap = document.getElementById('questions-wrap');
+  wrap.innerHTML = '';
+  QS.forEach((q, qi) => {
+    const card = document.createElement('div');
+    card.className = 'q-card' + (qi === 0 ? ' active' : '');
+    card.id = 'qcard-' + qi;
+    const labels = ['A','B','C','D'];
+    const opts = q.opts.map((o, oi) => `
+      <button class="opt ${answers[qi] === oi ? 'selected' : ''}" onclick="selectOpt(${qi}, ${oi})">
+        <div class="opt-marker">${labels[oi]}</div>
+        <div class="opt-label">${o.l}</div>
+      </button>`).join('');
+    card.innerHTML = `<div class="q-text">${q.text}</div><div class="options" id="opts-${qi}">${opts}</div>`;
+    wrap.appendChild(card);
+  });
+}
+
+// ── SELECT OPTION ─────────────────────────────────────────────────────────────
+function selectOpt(qi, oi) {
+  answers[qi] = oi;
+  document.querySelectorAll(`#opts-${qi} .opt`).forEach((el, i) => {
+    el.classList.toggle('selected', i === oi);
+  });
+  document.getElementById('btn-next').classList.add('ready');
+}
+
+// ── NAVIGATION ───────────────────────────────────────────────────────────────
+function updateUI() {
+  const total = QS.length;
+  document.getElementById('prog-count').textContent = `Question ${current + 1} of ${total}`;
+  document.getElementById('prog-fill').style.width = `${(current / total) * 100}%`;
+  document.querySelectorAll('.q-card').forEach((c, i) => c.classList.toggle('active', i === current));
+  document.getElementById('btn-next').classList.toggle('ready', answers[current] !== null);
+  document.getElementById('btn-back').disabled = current === 0;
+  document.getElementById('next-label').textContent = current === total - 1 ? 'See My Score' : 'Next';
+
+  const dimIdx = QS[current].dim;
+  const done = new Set();
+  for (let i = 0; i < current; i++) done.add(QS[i].dim);
+  document.querySelectorAll('.dim-tab').forEach((tab, i) => {
+    tab.classList.remove('active','done');
+    if (i === dimIdx) tab.classList.add('active');
+    else if (done.has(i)) tab.classList.add('done');
+  });
+}
+
+function nextQ() {
+  if (answers[current] === null) return;
+  if (current < QS.length - 1) { current++; updateUI(); }
+  else showResult();
+}
+function prevQ() {
+  if (current > 0) { current--; updateUI(); }
+}
+
+// ── SCORE ─────────────────────────────────────────────────────────────────────
+function calcScores() {
+  const dimRaw = new Array(5).fill(0);
+  const dimMax = new Array(5).fill(0);
+  QS.forEach((q, qi) => {
+    const ans = answers[qi] ?? 0;
+    dimRaw[q.dim] += q.opts[ans].s * q.w;
+    dimMax[q.dim] += 3 * q.w;
+  });
+  const dimPct = dimRaw.map((r, i) => Math.round((r / dimMax[i]) * 100));
+  const totalRaw = dimRaw.reduce((a,b) => a+b, 0);
+  const totalMax = dimMax.reduce((a,b) => a+b, 0);
+  return { overall: Math.round((totalRaw / totalMax) * 100), dimPct };
+}
+
+// ── SHOW RESULT ───────────────────────────────────────────────────────────────
+function showResult() {
+  document.getElementById('quiz-screen').style.display = 'none';
+  document.getElementById('result-screen').classList.add('visible');
+
+  const { overall, dimPct } = calcScores();
+
+  // Animate dial
+  setTimeout(() => {
+    const arc = 2 * Math.PI * 80 * 0.727;
+    const offset = arc - (arc * overall / 100);
+    const el = document.getElementById('dial-fill');
+    el.style.strokeDasharray = `${arc} 999`;
+    el.style.strokeDashoffset = offset;
+    let n = 0;
+    const step = () => { n = Math.min(n + 2, overall); document.getElementById('dial-score').textContent = n; if (n < overall) requestAnimationFrame(step); };
+    requestAnimationFrame(step);
+  }, 100);
+
+  let tier, tierClass, titleText, tagline, tierLabel;
+  if (overall >= 70) {
+    tier = 'HIGH'; tierClass = 'tier-high'; tierLabel = 'OPTIMISE';
+    titleText = 'Well-structured. Now sharpen the edges.';
+    tagline = "Your planning is ahead of most peers at your level. The gaps that remain are subtle — but at your income, subtle gaps are expensive ones.";
+  } else if (overall >= 40) {
+    tier = 'MID'; tierClass = 'tier-mid'; tierLabel = 'REINFORCE';
+    titleText = 'Solid foundations. Critical gaps underneath.';
+    tagline = "You've built something real — income, investments, some structure. But this scorecard has found the specific places where a plan that feels complete has meaningful holes.";
+  } else {
+    tier = 'LOW'; tierClass = 'tier-low'; tierLabel = 'RESTRUCTURE';
+    titleText = 'The plan exists. The architecture needs a rethink.';
+    tagline = "You're investing and thinking about the future. But the structure around those efforts isn't matched to someone with your complexity, income level, and career trajectory.";
+  }
+
+  document.getElementById('result-title').textContent = titleText;
+  document.getElementById('result-tagline').textContent = tagline;
+  document.getElementById('dial-tier-label').textContent = tierLabel;
+
+  // Dim bars
+  document.getElementById('dim-scores').innerHTML = DIMS.map((d, i) => `
+    <div class="dim-row">
+      <div class="dim-icon">${d.icon}</div>
+      <div class="dim-info">
+        <div class="dim-name">${d.name}</div>
+        <div class="dim-bar-track">
+          <div class="dim-bar-fill" style="width:0%;background:${d.color}" id="dbar-${i}"></div>
+        </div>
+      </div>
+      <div class="dim-score-label">${dimPct[i]}%</div>
+    </div>`).join('');
+  setTimeout(() => dimPct.forEach((p,i) => { document.getElementById(`dbar-${i}`).style.width = p+'%'; }), 300);
+
+  // Tier card
+  const tierTexts = {
+    HIGH: `At your level, the planning conversation isn't about starting — it's about <strong>the cost of residual gaps</strong>. A single unoptimised ESOP exercise, an insurance cover that hasn't been updated since your last role, or a portfolio allocation that hasn't been rebalanced in two years can each represent ₹15–30L of avoidable cost. The question isn't whether you have a plan. It's whether your plan is working as hard as you are.`,
+    MID: `You've done the things most senior professionals do — invested regularly, held insurance, built some structure. But this scorecard has identified <strong>the specific places where that structure has gaps</strong> that aren't visible day-to-day. The risk at your income level isn't catastrophic failure — it's chronic underperformance of wealth relative to career. The fixes are targeted, not wholesale. But they need to happen.`,
+    LOW: `This pattern is common among senior professionals who've focused, rightly, on building career capital over the last decade. The investing exists. The structure around it — the tax architecture, the allocation logic, the protection adequacy, the liquidity buffer — hasn't kept pace with the income. <strong>That gap is entirely closable.</strong> But it requires a deliberate intervention, not incremental adjustments to what's already in place.`
+  };
+
+  document.getElementById('tier-card').innerHTML = `
+    <div class="tier-card ${tierClass}">
+      <span class="tier-badge">${overall}/100</span>
+      <div class="tier-title">${titleText}</div>
+      <div class="tier-body">${tierTexts[tier]}</div>
+    </div>`;
+
+  // Insights
+  const insights = [
+    // Dim 0 — Retirement
+    [
+      { icon: "🏔️", head: "Your retirement number is probably too low", body: "Senior professionals consistently underestimate retirement corpus because they calculate at current lifestyle, not projected lifestyle — and they underestimate healthcare. At ₹80L+ CTC, a realistic retirement corpus target is often ₹8–12Cr in investible assets. Most haven't stress-tested their number against that range." },
+      { icon: "📤", head: "Employer transitions leak wealth silently", body: "Each role change involves EPF transfer lag, gratuity timing, group cover gaps, and unvested equity decisions. Across a 3–4 employer career at senior level, the unmanaged value at these transitions can easily exceed ₹30–50L cumulatively." },
+    ],
+    // Dim 1 — Tax & ESOP
+    [
+      { icon: "💹", head: "ESOP timing is the single highest-leverage tax decision you make", body: "A ₹1Cr ESOP exercised in one financial year versus spread across two can mean a ₹8–12L difference in tax paid — on the exact same wealth event. Most professionals exercise when grants vest because no one has built them a disposition calendar." },
+      { icon: "🧾", head: "Wealth transfer planning has a 10-year window you may be in right now", body: "Structured gifting to spouse, HUF creation, and LTCG optimisation across family members works best when started early — before the assets are too concentrated. At 45–55, this window is open. At 60+, the options narrow significantly." },
+    ],
+    // Dim 2 — Protection
+    [
+      { icon: "🛡️", head: "Your insurance cover is priced for who you were, not who you are", body: "A ₹1Cr term policy bought at ₹30L salary is meaningfully inadequate at ₹80L+ CTC — the family's financial dependence has more than doubled. And employer group cover vanishes the moment you change roles, often with no bridge in place." },
+      { icon: "📜", head: "Estate complexity grows faster than estate planning", body: "ESOPs from multiple employers, joint property, demat accounts across platforms, and business equity create succession complexity that a basic Will doesn't address. Without a registered Will and updated nominees, Indian succession law distributes — not necessarily as you'd intend." },
+    ],
+    // Dim 3 — Investment
+    [
+      { icon: "📊", head: "Real estate concentration is a structural risk, not a strategy", body: "Many senior professionals hold 60–70% of net worth in primary residence plus one or two additional properties. Real estate is illiquid, undiversified, and tax-inefficient at sale. Excluding your home, the investible portfolio is often far smaller than the overall wealth figure suggests." },
+      { icon: "🎯", head: "A static allocation is a position, not a plan", body: "A portfolio that hasn't been deliberately rebalanced toward shorter-duration instruments as you approach a retirement date is effectively making a bet — usually more equity-heavy than intended. A glide path isn't conservative; it's a function of matching asset class to time horizon." },
+    ],
+    // Dim 4 — Wealth Velocity
+    [
+      { icon: "⚡", head: "Increment capture rate is the most important metric you're not tracking", body: "At ₹80L+ income, the difference between capturing 50% vs. 70% of annual increments as invested assets over 10 years is approximately ₹1.5–2Cr in wealth — at conservative return assumptions. Most senior professionals have no idea what their increment capture rate actually is." },
+      { icon: "🏦", head: "GCC liquidity risk is real and underestimated", body: "GCC organisations restructure, are acquired, or exit markets faster than traditional employers. A 6-month liquid buffer felt conservative 10 years ago — in a GCC context, 12–18 months of lifestyle expenses in liquid assets is the defensible position for someone with your seniority and income." },
+    ],
+  ];
+
+  const ranked = dimPct.map((p,i) => ({i,p})).sort((a,b) => a.p-b.p);
+  document.getElementById('insights').innerHTML = ranked.slice(0,3).map(({i}) => {
+    const ins = insights[i][dimPct[i] < 40 ? 0 : 1];
+    return `<div class="insight-card">
+      <div class="insight-icon">${ins.icon}</div>
+      <div>
+        <div class="insight-head">${ins.head}</div>
+        <div class="insight-body">${ins.body}</div>
+      </div>
+    </div>`;
+  }).join('');
+
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+// ── RESTART ───────────────────────────────────────────────────────────────────
+function restart() {
+  current = 0;
+  answers = new Array(QS.length).fill(null);
+  buildQuestions();
+  updateUI();
+  document.getElementById('result-screen').classList.remove('visible');
+  document.getElementById('quiz-screen').style.display = 'block';
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+buildQuestions();
+updateUI();
+</script>
+</body>
+</html>
